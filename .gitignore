@@ -1,11 +1,11 @@
 # Data files
-*.txt
+
 .zencoder*
 
 # Database files
-*.db
-*.sqlite
-*.sqlite3
+data/*.db
+data/*.sqlite
+data/*.sqlite3
 
 # Python
 __pycache__/
@@ -49,5 +49,6 @@ logs/
 Thumbs.db
 
 # Bot token (security)
-config_local.py
+config/local_settings.py
 .env
+
