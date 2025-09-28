@@ -1,0 +1,126 @@
+Time Span 
+Agent Name 
+Agent Faction 
+Date (yyyy-mm-dd) 
+Time (hh:mm:ss) 
+Level 
+Lifetime AP 
+Current AP 
+Unique Portals Visited 
+Unique Portals Drone Visited
+Furthest Drone Distance 
+Portals Discovered 
+XM Collected 
+OPR Agreements 
+Portal Scans 
+Uploaded Uniques 
+Scout Controlled 
+Resonators Deployed 
+Links Created 
+Control Fields Created 
+Mind Units Captured 
+Longest Link Ever Created 
+Largest Control Field 
+XM Recharged 
+Portals Captured 
+Unique Portals Captured 
+Mods Deployed 
+Hacks 
+Drone Hacks 
+Glyph Hack Points 
+Completed Hackstreaks 
+Longest Sojourner Streak 
+Resonators Destroyed 
+Portals Neutralized 
+Enemy Links Destroyed 
+Enemy Fields Destroyed 
+Battle Beacon 
+Combatant Drones Returned 
+Machina Links Destroyed 
+Machina Resonators Destroyed 
+Machina Portals Neutralized 
+Machina Portals Reclaimed 
+Max Time Portal Held 
+Max Time Link Maintained 
+Max Link Length x Days 
+Max Time Field Held 
+Largest Field MUs x Days 
+Forced Drone Recalls 
+Distance Walked 
+Kinetic Capsules Completed 
+Unique Missions Completed 
+Research Bounties Completed 
+Research Days Completed 
+Mission Day(s) Attended 
+NL-1331 Meetup(s) Attended 
+First Saturday Events 
+Second Sunday Events 
++Delta Tokens 
++Delta Reso Points 
++Delta Field Points 
+Agents Recruited 
+Recursions 
+Months Subscribed 
+
+
+ALL TIME 
+H1GHT0WER_Test_Jr 
+Enlightened 
+2025-09-21 
+20:48:36 12 
+91769368 
+11769368 
+6490 
+908 
+6 
+254 
+308305720
+10207 
+2546 
+1705 
+116660 
+22070 
+14377 
+9871129 
+290 
+1146680 
+221029999 
+16778 
+5252 
+14735 
+45372 
+2481 
+81710 
+31 
+360 
+44066 
+7844 
+6969 
+3529 
+42 
+10 
+398 
+1970 
+236 
+142 
+445 
+270 
+4765 
+177 
+3249101 
+71 
+5120 
+478 
+618 
+206 
+39 
+7 
+2 
+36 
+13 
+5780 
+305 
+7261 
+1 
+2 
+1
