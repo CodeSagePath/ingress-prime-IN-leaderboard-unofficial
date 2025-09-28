@@ -71,7 +71,13 @@ def test_data_parser():
         # Test with sample data
         sample_data = "ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 3000 500 5 150 200000000 5000 1200 800 50000 10000 8000 5000000 200 500000 150000000 8000 2500 7000 20000 1200 40000 15 180 20000 4000 3500 1800 20 5 200 1000 120 70 220 135 2500 90 1500000 35 2500 240 300 100 20 3 1 18 6 3000 150 3500 0 1 0"
         
-        parsed = parser.parse_data_line(sample_data)
+        result = parser.parse_data_line(sample_data)
+        if isinstance(result, tuple):
+            parsed, error = result
+        else:
+            parsed = result
+            error = None
+            
         if parsed:
             print("✅ Sample data parsed successfully")
             print(f"   Agent: {parsed['agent_name']}")
@@ -80,6 +86,8 @@ def test_data_parser():
             print(f"   Current AP: {parser.format_number(parsed['current_ap'])}")
         else:
             print("❌ Failed to parse sample data")
+            if error:
+                print(f"   Error: {error.user_message}")
             assert False
         
         assert True
