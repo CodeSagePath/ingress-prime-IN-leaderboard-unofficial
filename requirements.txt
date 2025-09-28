@@ -1,0 +1,33 @@
+# Core dependencies for Ingress Leaderboard Bot
+# Compatible with both standard systems and Termux
+
+python-telegram-bot==20.7
+requests>=2.28.0
+python-dotenv>=0.19.0
+
+# Enhanced logging and formatting (optional but recommended)
+colorlog>=6.7.0
+rich>=13.0.0
+
+# System monitoring (useful for Termux)
+psutil>=5.9.0
+
+# Note: sqlite3, datetime, asyncio, logging are built-in Python modules
+
+# Development dependencies (uncomment if needed)
+# pytest>=7.0.0
+# pytest-asyncio>=0.21.0
+
+# Image processing for leaderboard generation
+Pillow>=10.0.0
+
+# Future enhancements (uncomment when needed)
+# pandas>=1.5.0
+# matplotlib>=3.6.0
+# seaborn>=0.12.0
+# plotly>=5.0.0
+
+# Termux-specific notes:
+# - All packages above are tested to work in Termux
+# - For scientific packages, you may need: pkg install python-numpy python-matplotlib
+# - Some packages may require compilation time in Termux
