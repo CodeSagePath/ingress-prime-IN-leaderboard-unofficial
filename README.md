@@ -6,34 +6,25 @@ A comprehensive Telegram bot for tracking and comparing Ingress game statistics 
 
 ```
 ingress-leaderboard/
-├── venv/                    # Virtual environment (created by setup)
+├── venv/                    # Virtual environment
 ├── src/                     # Source code
-│   ├── handlers/           # Telegram bot handlers
-│   │   ├── command_handlers.py
-│   │   ├── message_handlers.py
-│   │   └── callback_handlers.py
-│   ├── database/           # Database management
-│   │   └── manager.py
-│   ├── parsers/            # Data parsing logic
-│   │   └── data_parser.py
-│   ├── services/           # Business logic services
-│   │   ├── bot_service.py
-│   │   └── leaderboard_service.py
-│   └── utils/              # Utility functions
-│       ├── formatters.py
-│       └── validators.py
+│   ├── handlers/
+│   ├── database/
+│   ├── parsers/
+│   ├── services/
+│   └── utils/
 ├── config/                 # Configuration files
-│   ├── settings.py
-│   └── local_settings.py   # Created by setup
+│   └── config.py
 ├── tests/                  # Test files
 │   └── test_bot.py
-├── docs/                   # Documentation
-├── scripts/                # Setup and utility scripts
-│   ├── setup.py
+├── scripts/                # Utility scripts
 │   └── run_bot.sh
-├── data/                   # Database and data files
+├── .env                     # Environment variables (for BOT_TOKEN)
+├── .gitignore
 ├── main.py                 # Main entry point
-└── requirements.txt        # Python dependencies
+├── requirements.txt        # Python dependencies
+├── setup.py                # Project setup script
+└── setup.cfg               # Project configuration
 ```
 
 ## ✨ Features
@@ -50,34 +41,33 @@ ingress-leaderboard/
 ### 1. Setup
 
 ```bash
-# Clone or navigate to the project directory
+# Clone the repository
+git clone https://github.com/your-username/ingress-leaderboard.git
 cd ingress-leaderboard
 
-# Run the setup script
-python scripts/setup.py
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+# venv\Scripts\activate    # Windows
+
+# Install the project in editable mode
+pip install -e .
 ```
 
 ### 2. Configure
 
-Edit `config/local_settings.py` and add your Telegram bot token:
+Create a `.env` file in the project root and add your Telegram bot token:
 
-```python
-BOT_TOKEN = "your_actual_bot_token_here"
+```
+BOT_TOKEN="your_actual_bot_token_here"
 ```
 
 ### 3. Run
 
 ```bash
-# Activate virtual environment
-source venv/bin/activate  # Linux/Mac
-# or
-venv\Scripts\activate     # Windows
-
-# Start the bot
-python main.py
-
-# Or use the convenience script (Linux/Mac)
-./scripts/run_bot.sh
+# Run the bot using the script
+bash scripts/run_bot.sh
 ```
 
 ## 🤖 Bot Commands
@@ -133,54 +123,32 @@ Run tests to verify everything is working:
 # Activate virtual environment first
 source venv/bin/activate
 
-# Run tests
-python tests/test_bot.py
+# Run tests with pytest
+pytest
 ```
 
 ## 🔧 Development
 
-### Virtual Environment
+### Development Setup
 
-The project uses a virtual environment to isolate dependencies:
-
-```bash
-# Create virtual environment (done by setup script)
-python -m venv venv
-
-# Activate
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### Project Structure
-
-- **Handlers**: Separate files for different types of Telegram handlers
-- **Services**: Business logic and core functionality
-- **Database**: Data persistence and queries
-- **Parsers**: Data parsing and validation
-- **Utils**: Utility functions and helpers
-- **Config**: Configuration management
+The project is set up as an installable Python package. For development, it's recommended to install it in editable mode, as described in the 'Quick Start' section. This allows you to make changes to the source code and have them immediately reflected without reinstalling.
 
 ### Adding New Features
 
-1. Add handlers in `src/handlers/`
-2. Implement business logic in `src/services/`
-3. Add database operations in `src/database/`
-4. Update tests in `tests/`
+1.  Add handlers in `src/handlers/`
+2.  Implement business logic in `src/services/`
+3.  Add database operations in `src/database/`
+4.  Update tests in `tests/`
 
 ## 📝 Configuration
 
 ### Environment Variables
 
-- `BOT_TOKEN`: Your Telegram bot token
+- `BOT_TOKEN`: Your Telegram bot token (stored in `.env` file)
 
-### Config Files
+### Config File
 
-- `config/settings.py`: Main configuration
-- `config/local_settings.py`: Local overrides (created by setup)
+- `config/config.py`: Main configuration
 
 ## 🗄️ Database
 
@@ -192,7 +160,7 @@ The bot uses SQLite for local data storage:
 
 ## 🔒 Security
 
-- Bot token stored in local config file (not in version control)
+- Bot token stored in `.env` file (not in version control)
 - Input validation for all user data
 - SQL injection protection with parameterized queries
 - Error handling to prevent crashes
@@ -201,10 +169,10 @@ The bot uses SQLite for local data storage:
 
 ### Common Issues
 
-1. **Import Errors**: Make sure virtual environment is activated
-2. **Bot Token**: Verify token is set in `config/local_settings.py`
-3. **Database**: Check that `data/` directory exists and is writable
-4. **Dependencies**: Run `pip install -r requirements.txt`
+1. **Import Errors**: Make sure the virtual environment is activated and the project is installed correctly (`pip install -e .`).
+2. **Bot Token**: Verify that the `BOT_TOKEN` is set correctly in your `.env` file.
+3. **Database**: Check that the `data/` directory exists and is writable.
+4. **Dependencies**: Ensure all dependencies are installed by running `pip install -e .` again.
 
 ### Getting Help
 
