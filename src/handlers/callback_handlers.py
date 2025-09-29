@@ -83,22 +83,34 @@ class CallbackHandlers:
             
             # Update the message to show time selection feedback
             time_display = time_slot.replace('_', ' ').title()
-            await query.edit_message_text(
-                f"⏰ **Time frame selected:** __{time_display}__\n\n"
-                "_Now select a key element to view the leaderboard:_",
-                reply_markup=self._create_key_element_keyboard(),
-                parse_mode='Markdown'
-            )
+            try:
+                await query.edit_message_text(
+                    f"⏰ **Time frame selected:** __{time_display}__\n\n"
+                    "_Now select a key element to view the leaderboard:_",
+                    reply_markup=self._create_key_element_keyboard(),
+                    parse_mode='Markdown'
+                )
+            except Exception as e:
+                if "Message is not modified" in str(e):
+                    logger.debug(f"Time selection message not modified for user {user_id}")
+                else:
+                    logger.error(f"Error updating time selection: {e}")
         
         elif data == 'back_to_selection':
             # Back to key element selection
-            await query.edit_message_text(
-                """🏆 **Ingress Leaderboard**
+            try:
+                await query.edit_message_text(
+                    """🏆 **Ingress Leaderboard**
 
 _Select a key element to view the leaderboard:_""",
-                reply_markup=self._create_key_element_keyboard(),
-                parse_mode='Markdown'
-            )
+                    reply_markup=self._create_key_element_keyboard(),
+                    parse_mode='Markdown'
+                )
+            except Exception as e:
+                if "Message is not modified" in str(e):
+                    logger.debug(f"Back selection message not modified for user {user_id}")
+                else:
+                    logger.error(f"Error going back to selection: {e}")
         
         elif data.startswith('nav_'):
             # Handle navigation buttons
@@ -115,7 +127,13 @@ _Select a key element to view the leaderboard:_""",
                 # Generate leaderboard text with custom faction stickers
                 leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
                 reply_markup = self._create_navigation_buttons()
-                await query.edit_message_text(leaderboard_text, reply_markup=reply_markup, parse_mode='Markdown')
+                try:
+                    await query.edit_message_text(leaderboard_text, reply_markup=reply_markup, parse_mode='Markdown')
+                except Exception as e:
+                    if "Message is not modified" in str(e):
+                        logger.debug(f"Legacy leaderboard message not modified for user {user_id}")
+                    else:
+                        logger.error(f"Error updating legacy leaderboard: {e}")
         
         return
     
@@ -176,51 +194,52 @@ _Select a key element to view the leaderboard:_""",
         """Handle navigation button callbacks"""
         user_id = query.from_user.id
         
-        if data == 'nav_submit':
-            await query.edit_message_text(
-                """📊 **Ready to submit your stats!**
+        try:
+            if data == 'nav_submit':
+                await query.edit_message_text(
+                    """📊 **Ready to submit your stats!**
 
 Copy your statistics from Ingress _(Agent → Statistics)_ and paste them as a message.
 
 **Next:** Send your copied statistics data.""",
-                reply_markup=self._create_navigation_buttons(),
-                parse_mode='Markdown'
-            )
-        
-        elif data == 'nav_leaderboard':
-            await query.edit_message_text(
-                """🏆 **Ingress Leaderboard**
+                    reply_markup=self._create_navigation_buttons(),
+                    parse_mode='Markdown'
+                )
+            
+            elif data == 'nav_leaderboard':
+                await query.edit_message_text(
+                    """🏆 **Ingress Leaderboard**
 
 _Select a key element to view the leaderboard:_""",
-                reply_markup=self._create_key_element_keyboard(),
-                parse_mode='Markdown'
-            )
-        
-        elif data == 'nav_progress':
-            await query.edit_message_text(
-                """📈 **Progress Tracking**
+                    reply_markup=self._create_key_element_keyboard(),
+                    parse_mode='Markdown'
+                )
+            
+            elif data == 'nav_progress':
+                await query.edit_message_text(
+                    """📈 **Progress Tracking**
 
 Track your improvement over time! If you have submitted stats before, you can see your progress.
 
 **Usage:** Send your latest stats to see progress.""",
-                reply_markup=self._create_navigation_buttons(),
-                parse_mode='Markdown'
-            )
-        
-        elif data == 'nav_factions':
-            await query.edit_message_text(
-                """⚔️ **Faction Comparison**
+                    reply_markup=self._create_navigation_buttons(),
+                    parse_mode='Markdown'
+                )
+            
+            elif data == 'nav_factions':
+                await query.edit_message_text(
+                    """⚔️ **Faction Comparison**
 
 Compare Enlightened vs Resistance performance across all statistics.
 
 **Time Frames:** All Time, Monthly, Weekly""",
-                reply_markup=self._create_navigation_buttons(),
-                parse_mode='Markdown'
-            )
-        
-        elif data == 'nav_help':
-            await query.edit_message_text(
-                """❓ **Quick Help**
+                    reply_markup=self._create_navigation_buttons(),
+                    parse_mode='Markdown'
+                )
+            
+            elif data == 'nav_help':
+                await query.edit_message_text(
+                    """❓ **Quick Help**
 
 📊 **Data Format:**
 Copy exactly from Ingress → Agent → Statistics
@@ -233,13 +252,13 @@ Current AP: 12,345,678
 ```
 
 **Supported:** All Ingress statistics are supported!""",
-                reply_markup=self._create_navigation_buttons(),
-                parse_mode='Markdown'
-            )
-        
-        elif data == 'nav_stats':
-            await query.edit_message_text(
-                """📊 **Available Statistics**
+                    reply_markup=self._create_navigation_buttons(),
+                    parse_mode='Markdown'
+                )
+            
+            elif data == 'nav_stats':
+                await query.edit_message_text(
+                    """📊 **Available Statistics**
 
 All Ingress statistics are supported including:
 • Current AP
@@ -248,6 +267,19 @@ All Ingress statistics are supported including:
 • And many more!
 
 **Time Frames:** All Time, Monthly (30 days), Weekly (7 days)""",
-                reply_markup=self._create_navigation_buttons(),
-                parse_mode='Markdown'
-            )
+                    reply_markup=self._create_navigation_buttons(),
+                    parse_mode='Markdown'
+                )
+        except Exception as e:
+            # Handle "Message is not modified" and other edit errors gracefully
+            if "Message is not modified" in str(e):
+                logger.debug(f"Message not modified for user {user_id}: {data}")
+                # Silently ignore - user clicked the same button they're already viewing
+                pass
+            else:
+                logger.error(f"Error handling navigation callback {data}: {e}")
+                # Try to answer the callback to prevent the loading animation
+                try:
+                    await query.answer("⚠️ Something went wrong. Please try again.")
+                except:
+                    pass

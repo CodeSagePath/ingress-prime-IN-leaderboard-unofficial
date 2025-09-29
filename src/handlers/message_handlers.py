@@ -63,15 +63,18 @@ class MessageHandlers:
         
         if detection_result['type'] == 'ingress_data':
             # Looks like valid Ingress data
+            reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
             await update.message.reply_text(
                 "🎯 **Detected Ingress statistics!**\n\n"
                 "Processing your data automatically... ⚡",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
             await self.process_data_submission(update, context)
         
         elif detection_result['type'] == 'partial_data':
             # Looks like incomplete Ingress data
+            reply_markup = self._create_navigation_buttons()
             await update.message.reply_text(
                 "🤔 **This looks like partial Ingress data**\n\n"
                 f"I can see some statistics, but {detection_result['issue']}\n\n"
@@ -79,32 +82,36 @@ class MessageHandlers:
                 "1. Go to Ingress → Agent → Statistics\n"
                 "2. Copy ALL your statistics (scroll right to see everything)\n"
                 "3. Send the complete data here\n\n"
-                "Or use `/help` for detailed instructions.",
+                "Or tap **Help** below for detailed instructions.",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
         
         elif detection_result['type'] == 'possible_data':
             # Might be data, offer to help
+            reply_markup = self._create_navigation_buttons()
             await update.message.reply_text(
                 "🤔 **Are you trying to submit Ingress statistics?**\n\n"
                 "If yes:\n"
-                "• Use `/submit` and follow the guide\n"
+                "• Tap **Submit** below and follow the guide\n"
                 "• Or just send your complete stats data\n\n"
-                "If you need help: `/help`\n"
-                "For other commands: `/start`",
+                "Tap **Help** for detailed instructions.",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
         
         else:
             # Generic help for unrecognized messages
+            reply_markup = self._create_navigation_buttons()
             await update.message.reply_text(
                 "👋 **I'm here to help with Ingress leaderboards!**\n\n"
-                "🔥 **Popular commands:**\n"
-                "• `/submit` - Submit your Ingress statistics\n"
-                "• `/leaderboard` - View current rankings\n"
-                "• `/help` - Quick help guide\n"
-                "• `/start` - See all available commands\n\n"
-                "💡 Just copy your stats from Ingress and send them to me!",
+                "🔥 **Quick Access:**\n"
+                "• **Submit** - Add your Ingress statistics\n"
+                "• **Leaderboard** - View current rankings\n"
+                "• **Help** - Quick help guide\n\n"
+                "💡 Just copy your stats from Ingress and send them to me!\n"
+                "_Use the buttons below for easy navigation._",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
         return
