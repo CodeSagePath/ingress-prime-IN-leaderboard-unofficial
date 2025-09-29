@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 class ImageGenerator:
     def __init__(self):
-        self.assets_path = PROJECT_ROOT / "assets"
-        self.faction_images = {
-            "Enlightened": self.assets_path / "enlightened.webp",
-            "Resistance": self.assets_path / "resistance.webp"
+        # No longer using assets directory - using heart emojis instead
+        self.faction_emojis = {
+            "Enlightened": "💚",
+            "Resistance": "💙"
         }
         
         # Image settings
@@ -479,24 +479,7 @@ class ImageGenerator:
             img = Image.new('RGB', (img_width, total_height), (255, 255, 255))  # White background
             draw = ImageDraw.Draw(img)
             
-            # Load faction images
-            faction_images = {}
-            try:
-                enlightened_path = PROJECT_ROOT / "assets" / "enlightened.webp"
-                resistance_path = PROJECT_ROOT / "assets" / "resistance.webp"
-                
-                if enlightened_path.exists():
-                    enlightened_img = Image.open(enlightened_path).convert("RGBA")
-                    enlightened_img = enlightened_img.resize((32, 32), Image.Resampling.LANCZOS)
-                    faction_images["Enlightened"] = enlightened_img
-                
-                if resistance_path.exists():
-                    resistance_img = Image.open(resistance_path).convert("RGBA")
-                    resistance_img = resistance_img.resize((32, 32), Image.Resampling.LANCZOS)
-                    faction_images["Resistance"] = resistance_img
-                    
-            except Exception as e:
-                logger.error(f"Error loading faction images: {e}")
+            # No longer loading faction images - using heart emojis instead
             
             # Draw header
             header_text = f"🏆 {title} ({time_desc})"
@@ -525,17 +508,10 @@ class ImageGenerator:
                 draw.text((x_pos, y_pos), medal, fill=(0, 0, 0), font=self.entry_font)
                 x_pos += 60
                 
-                # Draw faction icon
-                if agent_faction in faction_images:
-                    faction_img = faction_images[agent_faction]
-                    # Paste faction image with transparency
-                    img.paste(faction_img, (x_pos, y_pos + 4), faction_img)
-                    x_pos += 40
-                else:
-                    # Fallback to emoji
-                    emoji = "🟢" if agent_faction == "Enlightened" else "🔵"
-                    draw.text((x_pos, y_pos), emoji, fill=(0, 0, 0), font=self.entry_font)
-                    x_pos += 40
+                # Draw faction heart emoji
+                emoji = self.faction_emojis.get(agent_faction, "⚪")
+                draw.text((x_pos, y_pos), emoji, fill=(0, 0, 0), font=self.entry_font)
+                x_pos += 40
                 
                 # Draw value and agent name
                 entry_text = f"{formatted_value} @{agent_name}"

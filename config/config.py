@@ -15,8 +15,8 @@ DATABASE_PATH = "ingress_leaderboard.db"
 
 # Faction colors
 FACTION_COLORS = {
-    "Enlightened": "🟢",
-    "Resistance": "🔵"
+    "Enlightened": "💚",
+    "Resistance": "💙"
 }
 
 # Time slots for leaderboards

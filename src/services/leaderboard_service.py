@@ -177,8 +177,8 @@ You can submit data in two ways:
 • all_time - All time records
 
 **Factions:**
-🟢 Enlightened
-🔵 Resistance
+💚 Enlightened
+💙 Resistance
 
 **Examples:**
 /leaderboard "Lifetime AP" weekly

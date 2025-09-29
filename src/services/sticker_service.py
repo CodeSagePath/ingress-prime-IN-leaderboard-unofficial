@@ -15,20 +15,13 @@ logger = logging.getLogger(__name__)
 
 class StickerManager:
     def __init__(self):
-        self.assets_path = PROJECT_ROOT / "assets"
         self.sticker_set_name = "ingress_factions_by_h1ght0wer_bot"  # Must end with _by_<bot_username>
         self.sticker_set_title = "Ingress Factions by H1GHT0WER"
         
-        # Faction sticker mapping
-        self.faction_stickers = {
-            "Enlightened": "enlightened_faction",
-            "Resistance": "resistance_faction"
-        }
-        
-        # Sticker file paths
-        self.faction_images = {
-            "Enlightened": self.assets_path / "enlightened.webp",
-            "Resistance": self.assets_path / "resistance.webp"
+        # Faction emoji mapping (no longer using assets)
+        self.faction_emojis = {
+            "Enlightened": "💚",
+            "Resistance": "💙"
         }
     
     def prepare_emoji_image(self, image_path: Path, output_path: Path, size: tuple = (100, 100)) -> bool:
@@ -118,49 +111,20 @@ class StickerManager:
             return False
     
     def prepare_all_faction_stickers(self) -> Dict[str, Path]:
-        """Prepare all faction images as stickers"""
-        prepared_stickers = {}
-        stickers_dir = self.assets_path / "stickers"
-        stickers_dir.mkdir(exist_ok=True)
-        
-        for faction, image_path in self.faction_images.items():
-            if not image_path.exists():
-                logger.error(f"Faction image not found: {image_path}")
-                continue
-            
-            sticker_name = self.faction_stickers[faction]
-            output_path = stickers_dir / f"{sticker_name}.png"
-            
-            if self.prepare_sticker_image(image_path, output_path):
-                prepared_stickers[faction] = output_path
-                logger.info(f"Prepared {faction} sticker: {output_path}")
-            else:
-                logger.error(f"Failed to prepare {faction} sticker")
-        
-        return prepared_stickers
+        """
+        No longer preparing faction stickers from assets.
+        Returns empty dict since we now use heart emojis directly.
+        """
+        logger.info("Faction stickers no longer needed - using heart emojis (💚💙)")
+        return {}
     
     def prepare_all_faction_emoji(self) -> Dict[str, Path]:
-        """Prepare all faction images as emoji"""
-        emoji_dir = PROJECT_ROOT / "temp" / "emoji"
-        emoji_dir.mkdir(parents=True, exist_ok=True)
-        
-        prepared_emoji = {}
-        
-        for faction, image_path in self.faction_images.items():
-            if not image_path.exists():
-                logger.error(f"Faction image not found: {image_path}")
-                continue
-            
-            emoji_name = self.faction_stickers[faction]
-            output_path = emoji_dir / f"{emoji_name}_emoji.png"
-            
-            if self.prepare_emoji_image(image_path, output_path):
-                prepared_emoji[faction] = output_path
-                logger.info(f"Prepared {faction} emoji: {output_path}")
-            else:
-                logger.error(f"Failed to prepare {faction} emoji")
-        
-        return prepared_emoji
+        """
+        No longer preparing faction emoji from assets.
+        Returns empty dict since we now use heart emojis directly.
+        """
+        logger.info("Faction emoji no longer needed - using heart emojis (💚💙)")
+        return {}
     
     async def create_custom_emoji_set(self, bot, user_id: int) -> bool:
         """
@@ -227,7 +191,7 @@ class StickerManager:
                     name=self.sticker_set_name,
                     title=self.sticker_set_title,
                     png_sticker=sticker_file,
-                    emojis="🟢" if first_faction == "Enlightened" else "🔵"
+                    emojis="💚" if first_faction == "Enlightened" else "💙"
                 )
             
             if not success:
@@ -240,7 +204,7 @@ class StickerManager:
                     continue  # Already added
                 
                 sticker_name = self.faction_stickers[faction]
-                emoji = "🟢" if faction == "Enlightened" else "🔵"
+                emoji = "💚" if faction == "Enlightened" else "💙"
                 
                 with open(sticker_path, 'rb') as sticker_file:
                     await bot.add_sticker_to_set(
@@ -262,25 +226,15 @@ class StickerManager:
     def get_faction_sticker_emoji(self, faction: str) -> str:
         """
         Get the faction representation for text
-        Returns the path to the faction image instead of emoji
+        Returns heart emoji for the faction
         """
-        if faction == "Enlightened":
-            return str(self.faction_images["Enlightened"])
-        elif faction == "Resistance":
-            return str(self.faction_images["Resistance"])
-        else:
-            return "⚪"
+        return self.faction_emojis.get(faction, "⚪")
     
     def get_faction_emoji_fallback(self, faction: str) -> str:
         """
         Get emoji fallback for factions
         """
-        if faction == "Enlightened":
-            return "🟢"
-        elif faction == "Resistance":
-            return "🔵"
-        else:
-            return "⚪"
+        return self.faction_emojis.get(faction, "⚪")
     
     def get_sticker_set_link(self) -> str:
         """Get the link to the sticker set"""
@@ -295,10 +249,10 @@ class StickerManager:
             # Find the appropriate sticker
             for sticker in sticker_set.stickers:
                 # Match by emoji or position
-                if faction == "Enlightened" and "🟢" in sticker.emoji:
+                if faction == "Enlightened" and "💚" in sticker.emoji:
                     await bot.send_sticker(chat_id=chat_id, sticker=sticker.file_id)
                     return True
-                elif faction == "Resistance" and "🔵" in sticker.emoji:
+                elif faction == "Resistance" and "💙" in sticker.emoji:
                     await bot.send_sticker(chat_id=chat_id, sticker=sticker.file_id)
                     return True
             

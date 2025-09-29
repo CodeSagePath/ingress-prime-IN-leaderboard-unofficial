@@ -139,7 +139,7 @@ Ready to see where you rank? 🏆
 
                     if success:
                         success_count += 1
-                        faction_emoji = "🟢" if parsed_data['faction'].lower() == 'enlightened' else "🔵"
+                        faction_emoji = "💚" if parsed_data['faction'].lower() == 'enlightened' else "💙"
                         success_text = f"""
 🎉 **Stats submitted successfully!**
 
@@ -433,8 +433,8 @@ Select a key element to view the leaderboard:"""
 The bot will now use these custom faction stickers in leaderboards instead of emoji balls!
 
 **Stickers included:**
-🟢 Enlightened faction logo
-🔵 Resistance faction logo
+💚 Enlightened faction logo
+💙 Resistance faction logo
 
 Created by: **H1GHT0WER**
                 """
@@ -502,10 +502,9 @@ These emoji-format images can now be used as custom emoji in Telegram!
                 await update.message.reply_text(
                     "❌ **Failed to prepare emoji**\n\n"
                     "This could be due to:\n"
-                    "• Missing faction image files\n"
-                    "• Image format issues\n"
+                    "• Image generation issues\n"
                     "• File system permissions\n\n"
-                    "Please check that enlightened.webp and resistance.webp exist in the assets folder.",
+                    "The bot now uses heart emojis (💚💙) instead of custom images.",
                     parse_mode='Markdown'
                 )
         
