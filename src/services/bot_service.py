@@ -3,7 +3,7 @@ Main bot service for the Ingress Leaderboard Bot
 """
 
 import logging
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, CallbackContext
 from telegram import Update
 
 from config.settings import BOT_TOKEN
@@ -51,6 +51,38 @@ class IngressLeaderboardBot:
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.message_handlers.handle_message))
         application.add_handler(CallbackQueryHandler(self.callback_handlers.handle_callback_query))
         
+        # Add error handler
+        application.add_error_handler(self._error_handler)
+        
         # Start the bot
         logger.info("Starting Ingress Leaderboard Bot...")
         application.run_polling()
+    
+    async def _error_handler(self, update: Update, context: CallbackContext):
+        """Handle errors in bot operations"""
+        try:
+            error_msg = str(context.error)
+            
+            # Log different types of errors with appropriate levels
+            if "Message is not modified" in error_msg:
+                # This is expected when users click buttons rapidly
+                logger.debug(f"Message not modified error: {error_msg}")
+                return
+            elif "Bad Request" in error_msg:
+                logger.warning(f"Bad request error: {error_msg}")
+            elif "Forbidden" in error_msg:
+                logger.warning(f"Forbidden error (user may have blocked bot): {error_msg}")
+            else:
+                logger.error(f"Unhandled error: {error_msg}", exc_info=context.error)
+            
+            # Try to inform the user if possible
+            if update and update.callback_query:
+                try:
+                    await update.callback_query.answer(
+                        "⚠️ Something went wrong. Please try again.",
+                        show_alert=False
+                    )
+                except:
+                    pass
+        except Exception as e:
+            logger.error(f"Error in error handler: {e}")
