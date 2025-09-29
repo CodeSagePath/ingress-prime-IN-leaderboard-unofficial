@@ -22,40 +22,33 @@ class CommandHandlers:
         """Handle /start command"""
         user = update.effective_user
         user_first_name = user.first_name or "Agent"
-        welcome_text = f"""
-👋 **Welcome {user_first_name}!** 
+        welcome_text = f"""👋 **Welcome {user_first_name}!** 
 
-🎯 **I'm your Ingress Leaderboard Bot** - _here to help you track and compare your statistics with other agents!_
+🎯 **Ingress Leaderboard Bot** - _Track & compare your Ingress stats!_
 
 🚀 **Quick Start:**
-1. Copy your stats from Ingress _(Agent → Statistics)_
-2. Send `/submit` and paste them here
-3. Check rankings with `/leaderboard`
+1. Copy stats from Ingress _(Agent → Statistics)_
+2. Tap "📊 Submit" below and paste
+3. View rankings with "🏆 Leaderboard"
 
-📋 **All Commands:**
-• `/submit` - __Submit your Ingress statistics__
-• `/leaderboard` - __View current rankings__ 
-• `/progress` - __Check your improvement over time__
-• `/factions` - __Compare Enlightened vs Resistance__
-• `/help` - __Quick help guide__
-
-💡 **Pro tip:** Just copy your stats from Ingress and send them directly - _I'll handle the rest automatically!_
-
-Ready to see where you rank? 🏆
-        """
-        await update.message.reply_text(welcome_text, parse_mode='Markdown')
+Ready to see where you rank? 🏆"""
+        
+        reply_markup = self._create_navigation_buttons()
+        await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     async def help_command(self, update: Update, context: CallbackContext):
         """Handle /help command - show quick help"""
         help_text = self.parser.get_quick_help()
-        await update.message.reply_text(help_text, parse_mode='Markdown')
+        reply_markup = self._create_navigation_buttons(exclude_current="nav_help")
+        await update.message.reply_text(help_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     async def help_detailed_command(self, update: Update, context: CallbackContext):
         """Handle /help_detailed command - show comprehensive help"""
         help_text = self.parser.get_detailed_help()
-        await update.message.reply_text(help_text, parse_mode='Markdown')
+        reply_markup = self._create_navigation_buttons(exclude_current="nav_help")
+        await update.message.reply_text(help_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     async def submit_command(self, update: Update, context: CallbackContext):
@@ -72,16 +65,16 @@ Ready to see where you rank? 🏆
         # No data provided, set state and show prompt
         context.user_data['state'] = 'awaiting_data'
         
-        submit_text = f"""
-📊 **Ready to submit your Ingress stats!**
+        submit_text = f"""📊 **Ready to submit your stats!**
 
 {self.parser.get_quick_help()}
 
-**Next:** Just paste your copied statistics data here and _I'll process it automatically!_
+**Next:** Paste your copied statistics data here.
 
-❌ Send `/cancel` to cancel submission.
-        """
-        await update.message.reply_text(submit_text, parse_mode='Markdown')
+❌ Send `/cancel` to cancel."""
+        
+        reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
+        await update.message.reply_text(submit_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     async def _process_submission_data(self, update: Update, context: CallbackContext, data_text: str):
@@ -101,7 +94,12 @@ Ready to see where you rank? 🏆
                 
                 error_message += f"\n\n{self.parser.get_quick_help()}"
                 
-                await update.message.reply_text(error_message, parse_mode='Markdown')
+                keyboard = [
+                    [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
+                     InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await update.message.reply_text(error_message, reply_markup=reply_markup, parse_mode='Markdown')
                 return
             
             # If some lines had errors but we got some valid data, show warnings
@@ -112,12 +110,23 @@ Ready to see where you rank? 🏆
                 if len(parse_errors) > 2:
                     warning_msg += f"• _...and {len(parse_errors)-2} more issues_\n"
                 
-                await update.message.reply_text(warning_msg, parse_mode='Markdown')
+                keyboard = [
+                    [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
+                     InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await update.message.reply_text(warning_msg, reply_markup=reply_markup, parse_mode='Markdown')
             
             if not parsed_data_list:
+                keyboard = [
+                    [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
+                     InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
                 await update.message.reply_text(
-                    "❌ **No valid data could be processed.**\n\n" + 
+                    "❌ **No valid data processed**\n\n" + 
                     self.parser.get_quick_help(),
+                    reply_markup=reply_markup,
                     parse_mode='Markdown'
                 )
                 return
@@ -141,41 +150,40 @@ Ready to see where you rank? 🏆
                     if success:
                         success_count += 1
                         faction_emoji = "💚" if parsed_data['faction'].lower() == 'enlightened' else "💙"
-                        success_text = f"""
-🎉 **Stats submitted successfully!**
+                        success_text = f"""🎉 **Stats submitted!**
 
 {faction_emoji} **{parsed_data['agent_name']}** _({parsed_data['faction']})_
 📅 {parsed_data['data_date']} at {parsed_data['data_time']}
 📊 Level **{parsed_data['level']}** • ⚡ **{self.parser.format_number(parsed_data['current_ap'])}** AP
 
-🏆 **What's next?**
-• Check your ranking: `/leaderboard Distance Walked`
-• Compare progress: `/progress`
-• View faction stats: `/factions`
-
-__Great work, Agent!__ 💪
-                        """
-                        await update.message.reply_text(success_text, parse_mode='Markdown')
+__Great work, Agent!__ 💪"""
+                        
+                        reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
+                        await update.message.reply_text(success_text, reply_markup=reply_markup, parse_mode='Markdown')
                     else:
+                        keyboard = [
+                            [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
+                             InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+                        ]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
                         await update.message.reply_text(
                             f"❌ **Failed to save data for {parsed_data['agent_name']}**\n\n"
-                            "_This might be a temporary issue._ Please:\n"
-                            "• Try submitting again in a few moments\n"
-                            "• Contact support if the problem persists\n\n"
-                            "_Your data was parsed correctly, just couldn't save it this time._",
+                            "_Temporary issue. Data was parsed correctly._",
+                            reply_markup=reply_markup,
                             parse_mode='Markdown'
                         )
                 
                 except Exception as db_error:
                     logger.error(f"Database error for agent {parsed_data.get('agent_name', 'Unknown')}: {db_error}")
+                    keyboard = [
+                        [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
+                         InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
                     await update.message.reply_text(
                         f"❌ **Database error for {parsed_data.get('agent_name', 'your agent')}**\n\n"
-                        "_There was a problem with the database operation._\n\n"
-                        "💡 **This could be:**\n"
-                        "• Temporary database connectivity issue\n"
-                        "• Duplicate data _(already submitted same stats)_\n"
-                        "• Database is busy processing other requests\n\n"
-                        "🔄 **Please try again in a few minutes.**",
+                        "_Could be temporary issue or duplicate data._",
+                        reply_markup=reply_markup,
                         parse_mode='Markdown'
                     )
 
@@ -192,21 +200,23 @@ __Great work, Agent!__ 💪
                 else:
                     summary_msg += "\n\n❌ _None of the submissions could be processed successfully_"
                 
-                await update.message.reply_text(summary_msg, parse_mode='Markdown')
+                reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
+                await update.message.reply_text(summary_msg, reply_markup=reply_markup, parse_mode='Markdown')
 
             # Clear user state if it was set
             context.user_data.pop('state', None)
                 
         except Exception as e:
             logger.error(f"Unexpected error processing data submission: {e}")
+            keyboard = [
+                [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
+                 InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_text(
                 "❌ **Unexpected error occurred**\n\n"
-                "_Something went wrong while processing your submission._\n\n"
-                "💡 **Try this:**\n"
-                "• Use `/help` to check the data format\n"
-                "• Try submitting again with complete statistics\n"
-                "• Contact support if this keeps happening\n\n"
-                "_Your data might have formatting issues or be incomplete._",
+                "_Something went wrong. Check data format or try again._",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
     
@@ -262,16 +272,19 @@ __Great work, Agent!__ 💪
         # Generate leaderboard as text-based message
         try:
             leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
-            await update.message.reply_text(leaderboard_text, parse_mode='Markdown')
+            reply_markup = self._create_navigation_buttons(exclude_current="nav_leaderboard")
+            await update.message.reply_text(leaderboard_text, reply_markup=reply_markup, parse_mode='Markdown')
         except Exception as e:
             logger.error(f"Error generating leaderboard: {e}")
+            keyboard = [
+                [InlineKeyboardButton("🔄 Try Again", callback_data="nav_leaderboard"),
+                 InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_text(
                 "❌ **Error generating leaderboard**\n\n"
-                "_There was a problem creating the leaderboard._\n\n"
-                "💡 **Please try:**\n"
-                "• Check if the statistic name is correct\n"
-                "• Try again in a few moments\n"
-                "• Use `/help` for available statistics",
+                "_Problem creating the leaderboard. Try again or check help._",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
         return
@@ -320,9 +333,15 @@ _Select a key element to view the leaderboard:_"""
         user_agents = self.db.get_agents_by_user(user_id)
         
         if not user_agents:
+            keyboard = [
+                [InlineKeyboardButton("📊 Submit Stats", callback_data="nav_submit"),
+                 InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_text(
-                "📈 **Progress tracking requires your agent name to be registered.**\n\n"
-                "_Please submit data first using_ `/submit`_, then try_ `/progress` _again._",
+                "📈 **Progress tracking requires your agent registration.**\n\n"
+                "_Please submit data first, then try progress again._",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
             return
@@ -364,10 +383,15 @@ _Select a key element to view the leaderboard:_"""
         
         # Validate stat
         if stat not in LEADERBOARD_STATS:
+            keyboard = [
+                [InlineKeyboardButton("📊 Available Stats", callback_data="nav_stats"),
+                 InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
             await update.message.reply_text(
                 f"❌ **Invalid statistic:** `{stat}`\n\n"
-                f"**Available statistics:** _{', '.join(LEADERBOARD_STATS[:10])}..._\n"
-                f"Use `/stats` to see __all available statistics__.",
+                f"**Available:** _{', '.join(LEADERBOARD_STATS[:5])}..._",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
             return
@@ -400,14 +424,16 @@ _Select a key element to view the leaderboard:_"""
             # Delete the original progress message
             await sent_message.delete()
             
-            # Send confirmation message
-            await update.message.reply_text("_[result removed]_", parse_mode='Markdown')
+            # Send confirmation message with navigation
+            reply_markup = self._create_navigation_buttons()
+            await update.message.reply_text("_[result removed]_", reply_markup=reply_markup, parse_mode='Markdown')
             
         except Exception as e:
             logger.error(f"Error during auto-deletion of progress message: {e}")
             # If deletion fails, still send the confirmation message
             try:
-                await update.message.reply_text("_[result removed - deletion failed]_", parse_mode='Markdown')
+                reply_markup = self._create_navigation_buttons()
+                await update.message.reply_text("_[result removed - deletion failed]_", reply_markup=reply_markup, parse_mode='Markdown')
             except Exception as e2:
                 logger.error(f"Error sending deletion confirmation: {e2}")
     
@@ -424,7 +450,8 @@ _Select a key element to view the leaderboard:_"""
         
         # Generate faction comparison text with custom faction stickers
         comparison_text = self.leaderboard.generate_faction_comparison(time_slot)
-        await update.message.reply_text(comparison_text, parse_mode='Markdown')
+        reply_markup = self._create_navigation_buttons(exclude_current="nav_factions")
+        await update.message.reply_text(comparison_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     async def stats_command(self, update: Update, context: CallbackContext):
@@ -440,7 +467,8 @@ _Select a key element to view the leaderboard:_"""
             else:
                 stats_text += f"• **{slot.replace('_', ' ').title()}**\n"
         
-        await update.message.reply_text(stats_text, parse_mode='Markdown')
+        reply_markup = self._create_navigation_buttons()
+        await update.message.reply_text(stats_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     async def create_stickers_command(self, update: Update, context: CallbackContext):
@@ -450,7 +478,8 @@ _Select a key element to view the leaderboard:_"""
         # Check if user is authorized (you might want to restrict this to admins)
         # For now, let's allow any user to trigger sticker creation
         
-        await update.message.reply_text("🎨 **Creating faction sticker set...** _This may take a moment._", parse_mode='Markdown')
+        reply_markup = self._create_navigation_buttons()
+        await update.message.reply_text("🎨 **Creating faction sticker set...** _This may take a moment._", reply_markup=reply_markup, parse_mode='Markdown')
         
         try:
             success = await self.leaderboard.sticker_manager.create_sticker_set(context.bot, user_id)
@@ -471,23 +500,24 @@ _The bot will now use these custom faction stickers in leaderboards instead of e
 
 _Created by:_ **H1GHT0WER**
                 """
-                await update.message.reply_text(success_text, parse_mode='Markdown')
+                reply_markup = self._create_navigation_buttons()
+                await update.message.reply_text(success_text, reply_markup=reply_markup, parse_mode='Markdown')
             else:
+                reply_markup = self._create_navigation_buttons()
                 await update.message.reply_text(
                     "❌ **Failed to create sticker set**\n\n"
-                    "_This could be due to:_\n"
-                    "• __Sticker set already exists__\n"
-                    "• __Image format issues__\n"
-                    "• __Telegram API limitations__\n\n"
-                    "_Please try again or contact support._",
+                    "_Could be: existing set, format issues, or API limits._",
+                    reply_markup=reply_markup,
                     parse_mode='Markdown'
                 )
         
         except Exception as e:
             logger.error(f"Error in create_stickers_command: {e}")
+            reply_markup = self._create_navigation_buttons()
             await update.message.reply_text(
                 "❌ **Error creating sticker set**\n\n"
-                "_An unexpected error occurred. Please try again later._",
+                "_Unexpected error. Please try again later._",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
         
@@ -495,7 +525,8 @@ _Created by:_ **H1GHT0WER**
     
     async def prepare_emoji_command(self, update: Update, context: CallbackContext):
         """Handle /prepare_emoji command - convert faction images to emoji format"""
-        await update.message.reply_text("🎨 **Converting faction images to emoji format...**", parse_mode='Markdown')
+        reply_markup = self._create_navigation_buttons()
+        await update.message.reply_text("🎨 **Converting faction images to emoji format...**", reply_markup=reply_markup, parse_mode='Markdown')
         
         try:
             prepared_emoji = self.leaderboard.sticker_manager.prepare_all_faction_emoji()
@@ -521,7 +552,8 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
 3. __Update__ the bot configuration with the custom emoji IDs
                 """
                 
-                await update.message.reply_text(success_text, parse_mode='Markdown')
+                reply_markup = self._create_navigation_buttons()
+                await update.message.reply_text(success_text, reply_markup=reply_markup, parse_mode='Markdown')
                 
                 # Send the emoji files to the user
                 for faction, emoji_path in prepared_emoji.items():
@@ -532,20 +564,24 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
                             caption=f"__{faction}__ faction emoji _(100x100 PNG)_"
                         )
             else:
+                reply_markup = self._create_navigation_buttons()
                 await update.message.reply_text(
                     "❌ **Failed to prepare emoji**\n\n"
                     "_This could be due to:_\n"
                     "• __Image generation issues__\n"
                     "• __File system permissions__\n\n"
                     "_The bot now uses heart emojis (💚💙) instead of custom images._",
+                    reply_markup=reply_markup,
                     parse_mode='Markdown'
                 )
         
         except Exception as e:
             logger.error(f"Error in prepare_emoji_command: {e}")
+            reply_markup = self._create_navigation_buttons()
             await update.message.reply_text(
                 "❌ **Error preparing emoji**\n\n"
                 "_An unexpected error occurred. Please try again later._",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
         
@@ -555,29 +591,58 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
         """Handle /cancel command"""
         current_state = context.user_data.pop('state', None)
         
+        reply_markup = self._create_navigation_buttons()
+        
         if current_state == 'awaiting_data':
             await update.message.reply_text(
-                "✅ **Data submission cancelled**\n\n"
-                "_No worries!_ When you're ready:\n"
-                "• Use `/submit` to try again\n"
-                "• Use `/help` if you need guidance\n\n"
-                "__I'm here whenever you need me!__ 😊",
+                "✅ **Submission cancelled**\n\n"
+                "_Ready when you are!_ 😊",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
         elif current_state:
             await update.message.reply_text(
                 "✅ **Operation cancelled**\n\n"
-                "_Back to the main menu._ Use `/start` to see all available commands!",
+                "_Back to main menu._",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
         else:
             await update.message.reply_text(
                 "🤔 **Nothing to cancel**\n\n"
-                "_You don't have any active operations running._\n\n"
-                "💡 **Want to do something?**\n"
-                "• `/submit` - __Submit your Ingress stats__\n"
-                "• `/leaderboard` - __View rankings__\n"
-                "• `/help` - __Get help__",
+                "_No active operations._",
+                reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
         return
+    
+    def _create_navigation_buttons(self, exclude_current=None):
+        """Create navigation buttons for all commands"""
+        buttons = []
+        
+        # Main navigation buttons
+        nav_buttons = [
+            ("📊 Submit", "nav_submit"),
+            ("🏆 Leaderboard", "nav_leaderboard"), 
+            ("📈 Progress", "nav_progress"),
+            ("⚔️ Factions", "nav_factions"),
+            ("❓ Help", "nav_help")
+        ]
+        
+        # Filter out current command if specified
+        if exclude_current:
+            nav_buttons = [(text, data) for text, data in nav_buttons if data != exclude_current]
+        
+        # Create rows of 2-3 buttons each for better mobile display
+        row = []
+        for text, callback_data in nav_buttons:
+            row.append(InlineKeyboardButton(text, callback_data=callback_data))
+            if len(row) == 2:
+                buttons.append(row)
+                row = []
+        
+        # Add remaining buttons if any
+        if row:
+            buttons.append(row)
+        
+        return InlineKeyboardMarkup(buttons)
