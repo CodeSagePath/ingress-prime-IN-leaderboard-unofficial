@@ -28,6 +28,9 @@ class CallbackHandlers:
         if user_id not in self.user_selections:
             self.user_selections[user_id] = {'time_slot': 'all_time', 'faction': None}
         
+        # Disable the previous menu first
+        await self._disable_previous_menu(query)
+        
         if data.startswith('key_element_'):
             # Key element selection
             element_key = data.replace('key_element_', '').replace('_', ' ')
@@ -58,22 +61,21 @@ class CallbackHandlers:
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
-                # Send as text-based message
+                # Send as new text-based message
                 try:
-                    await query.edit_message_text(
-                        leaderboard_text, 
-                        parse_mode='Markdown',
-                        reply_markup=reply_markup
-                    )
-                except Exception as e:
-                    logger.error(f"Error sending leaderboard text: {e}")
-                    # Fallback message if editing fails
-                    await query.delete_message()
                     await context.bot.send_message(
                         chat_id=query.message.chat_id,
                         text=leaderboard_text,
                         parse_mode='Markdown',
                         reply_markup=reply_markup
+                    )
+                except Exception as e:
+                    logger.error(f"Error sending leaderboard text: {e}")
+                    # Fallback message if sending fails
+                    await context.bot.send_message(
+                        chat_id=query.message.chat_id,
+                        text="❌ Error displaying leaderboard. Please try again.",
+                        parse_mode='Markdown'
                     )
         
         elif data.startswith('time_'):
@@ -81,40 +83,36 @@ class CallbackHandlers:
             time_slot = data.replace('time_', '')
             self.user_selections[user_id]['time_slot'] = time_slot
             
-            # Update the message to show time selection feedback
+            # Send new message to show time selection feedback
             time_display = time_slot.replace('_', ' ').title()
             try:
-                await query.edit_message_text(
-                    f"⏰ **Time frame selected:** __{time_display}__\n\n"
-                    "_Now select a key element to view the leaderboard:_",
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text=f"⏰ **Time frame selected:** __{time_display}__\n\n"
+                         "_Now select a key element to view the leaderboard:_",
                     reply_markup=self._create_key_element_keyboard(),
                     parse_mode='Markdown'
                 )
             except Exception as e:
-                if "Message is not modified" in str(e):
-                    logger.debug(f"Time selection message not modified for user {user_id}")
-                else:
-                    logger.error(f"Error updating time selection: {e}")
+                logger.error(f"Error sending time selection: {e}")
         
         elif data == 'back_to_selection':
-            # Back to key element selection
+            # Back to key element selection - send new message
             try:
-                await query.edit_message_text(
-                    """🏆 **Ingress Leaderboard**
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="""🏆 **Ingress Leaderboard**
 
 _Select a key element to view the leaderboard:_""",
                     reply_markup=self._create_key_element_keyboard(),
                     parse_mode='Markdown'
                 )
             except Exception as e:
-                if "Message is not modified" in str(e):
-                    logger.debug(f"Back selection message not modified for user {user_id}")
-                else:
-                    logger.error(f"Error going back to selection: {e}")
+                logger.error(f"Error sending back to selection: {e}")
         
         elif data.startswith('nav_'):
-            # Handle navigation buttons
-            await self._handle_navigation_callback(query, data)
+            # Handle navigation buttons - pass context for new messages
+            await self._handle_navigation_callback(query, data, context)
         
         elif data.startswith('lb_'):
             # Legacy leaderboard callback (for backward compatibility)
@@ -124,16 +122,18 @@ _Select a key element to view the leaderboard:_""",
                 time_slot = parts[2]
                 faction = parts[3] if parts[3] != 'all' else None
                 
-                # Generate leaderboard text with custom faction stickers
+                # Generate leaderboard text with custom faction stickers - send new message
                 leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
                 reply_markup = self._create_navigation_buttons()
                 try:
-                    await query.edit_message_text(leaderboard_text, reply_markup=reply_markup, parse_mode='Markdown')
+                    await context.bot.send_message(
+                        chat_id=query.message.chat_id,
+                        text=leaderboard_text, 
+                        reply_markup=reply_markup, 
+                        parse_mode='Markdown'
+                    )
                 except Exception as e:
-                    if "Message is not modified" in str(e):
-                        logger.debug(f"Legacy leaderboard message not modified for user {user_id}")
-                    else:
-                        logger.error(f"Error updating legacy leaderboard: {e}")
+                    logger.error(f"Error sending legacy leaderboard: {e}")
         
         return
     
@@ -190,14 +190,28 @@ _Select a key element to view the leaderboard:_""",
         
         return InlineKeyboardMarkup(buttons)
     
-    async def _handle_navigation_callback(self, query, data):
+    async def _disable_previous_menu(self, query):
+        """Disable the previous menu by editing it to show 'send a new request'"""
+        try:
+            disabled_text = "🔒 **Menu disabled** - _Send a new request_"
+            await query.edit_message_text(
+                text=disabled_text,
+                reply_markup=None,  # Remove the keyboard
+                parse_mode='Markdown'
+            )
+        except Exception as e:
+            # Silently handle cases where message can't be edited (e.g., too old)
+            logger.debug(f"Could not disable previous menu: {e}")
+    
+    async def _handle_navigation_callback(self, query, data, context):
         """Handle navigation button callbacks"""
         user_id = query.from_user.id
         
         try:
             if data == 'nav_submit':
-                await query.edit_message_text(
-                    """📊 **Ready to submit your stats!**
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="""📊 **Ready to submit your stats!**
 
 Copy your statistics from Ingress _(Agent → Statistics)_ and paste them as a message.
 
@@ -207,8 +221,9 @@ Copy your statistics from Ingress _(Agent → Statistics)_ and paste them as a m
                 )
             
             elif data == 'nav_leaderboard':
-                await query.edit_message_text(
-                    """🏆 **Ingress Leaderboard**
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="""🏆 **Ingress Leaderboard**
 
 _Select a key element to view the leaderboard:_""",
                     reply_markup=self._create_key_element_keyboard(),
@@ -216,8 +231,9 @@ _Select a key element to view the leaderboard:_""",
                 )
             
             elif data == 'nav_progress':
-                await query.edit_message_text(
-                    """📈 **Progress Tracking**
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="""📈 **Progress Tracking**
 
 Track your improvement over time! If you have submitted stats before, you can see your progress.
 
@@ -227,8 +243,9 @@ Track your improvement over time! If you have submitted stats before, you can se
                 )
             
             elif data == 'nav_factions':
-                await query.edit_message_text(
-                    """⚔️ **Faction Comparison**
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="""⚔️ **Faction Comparison**
 
 Compare Enlightened vs Resistance performance across all statistics.
 
@@ -238,8 +255,9 @@ Compare Enlightened vs Resistance performance across all statistics.
                 )
             
             elif data == 'nav_help':
-                await query.edit_message_text(
-                    """❓ **Quick Help**
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="""❓ **Quick Help**
 
 📊 **Data Format:**
 Copy exactly from Ingress → Agent → Statistics
@@ -257,8 +275,9 @@ Current AP: 12,345,678
                 )
             
             elif data == 'nav_stats':
-                await query.edit_message_text(
-                    """📊 **Available Statistics**
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="""📊 **Available Statistics**
 
 All Ingress statistics are supported including:
 • Current AP
