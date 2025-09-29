@@ -47,6 +47,8 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+.marscode
+/
 
 # Bot token (security)
 config/local_settings.py
