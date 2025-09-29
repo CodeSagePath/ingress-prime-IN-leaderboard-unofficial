@@ -286,7 +286,7 @@ class DataParser:
 🎯 **Quick Guide: Submit Your Ingress Stats**
 
 **Step 1:** Open Ingress → Agent → Statistics
-**Step 2:** Copy your statistics _(including headers is OK!)_
+**Step 2:** Copy your statistics
 **Step 3:** Send it here with `/submit`
 
 **That's it!** ✨ _The bot handles the rest automatically._
