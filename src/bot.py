@@ -40,7 +40,7 @@ class IngressLeaderboardBot:
 
 This bot helps you track and compare Ingress statistics with other agents.
 
-🟢 **Enlightened** vs 🔵 **Resistance**
+💚 **Enlightened** vs 💙 **Resistance**
 
 Use /help to see all available commands.
 Use /submit to submit your first statistics.
@@ -224,7 +224,7 @@ Just copy your stats line and paste it here. The bot will automatically parse an
             success = self.db.add_submission(agent_id, parsed_data)
             
             if success:
-                faction_emoji = "🟢" if parsed_data['faction'].lower() == 'enlightened' else "🔵"
+                faction_emoji = "💚" if parsed_data['faction'].lower() == 'enlightened' else "💙"
                 success_text = f"""
 ✅ **Data submitted successfully!**
 
