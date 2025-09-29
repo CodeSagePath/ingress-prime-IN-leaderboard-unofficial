@@ -49,9 +49,9 @@ class LeaderboardManager:
                     medal = "🥉"
                 else:
                     if i <= 9:
-                        medal = f"  {i}. "
-                    else:
                         medal = f" {i}. "
+                    else:
+                        medal = f"{i}. "
                 
                 leaderboard_text += f"{medal} {faction_emoji} {formatted_value} @{agent_name}\n"
             
