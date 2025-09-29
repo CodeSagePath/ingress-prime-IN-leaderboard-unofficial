@@ -3,6 +3,7 @@ Command handlers for the Ingress Leaderboard Bot
 """
 
 import logging
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 from config.settings import LEADERBOARD_STATS, TIME_SLOTS, KEY_ELEMENTS
@@ -375,8 +376,35 @@ Select a key element to view the leaderboard:"""
             progress_text += f"\n\n💡 **Other agents:** {', '.join(other_agents)}\n"
             progress_text += f"Use `/progress {other_agents[0]} {stat}` to see their progress."
         
-        await update.message.reply_text(progress_text, parse_mode='Markdown')
+        # Add self-delete notice to the progress text
+        progress_text += f"\n\n⏰ **This message will self-delete in 30 seconds**"
+        
+        # Send the progress message
+        sent_message = await update.message.reply_text(progress_text, parse_mode='Markdown')
+        
+        # Schedule auto-deletion after 30 seconds
+        asyncio.create_task(self._auto_delete_progress_message(update, sent_message))
         return
+    
+    async def _auto_delete_progress_message(self, update: Update, sent_message):
+        """Auto-delete progress message after 30 seconds and send confirmation"""
+        try:
+            # Wait for 30 seconds
+            await asyncio.sleep(30)
+            
+            # Delete the original progress message
+            await sent_message.delete()
+            
+            # Send confirmation message
+            await update.message.reply_text("[result removed]")
+            
+        except Exception as e:
+            logger.error(f"Error during auto-deletion of progress message: {e}")
+            # If deletion fails, still send the confirmation message
+            try:
+                await update.message.reply_text("[result removed - deletion failed]")
+            except Exception as e2:
+                logger.error(f"Error sending deletion confirmation: {e2}")
     
     async def factions_command(self, update: Update, context: CallbackContext):
         """Handle /factions command"""
