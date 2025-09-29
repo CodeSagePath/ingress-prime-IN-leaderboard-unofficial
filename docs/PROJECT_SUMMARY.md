@@ -8,7 +8,7 @@ Successfully created a comprehensive Telegram bot for Ingress agent leaderboards
 
 1. **Data Format Support**: Parses the exact Ingress statistics format provided
 2. **Dynamic Time Slots**: Daily, weekly, monthly, and all-time leaderboards
-3. **Faction-Based Leaderboards**: Separate tracking for Enlightened (🟢) and Resistance (🔵)
+3. **Faction-Based Leaderboards**: Separate tracking for Enlightened (💚) and Resistance (💙)
 4. **Local Data Storage**: SQLite database for persistent data storage
 5. **Date Tracking**: Submission dates and data dates are tracked
 6. **Progress Comparison**: Compare current vs previous submissions
@@ -62,8 +62,8 @@ Successfully created a comprehensive Telegram bot for Ingress agent leaderboards
 - **All Time**: Complete history
 
 #### Faction Support:
-- 🟢 **Enlightened**: Green color coding
-- 🔵 **Resistance**: Blue color coding
+- 💚 **Enlightened**: Green heart emoji
+- 💙 **Resistance**: Blue heart emoji
 - Separate leaderboards and comparisons
 
 ### 🛠️ Technical Implementation

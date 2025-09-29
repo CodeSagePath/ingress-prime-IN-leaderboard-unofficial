@@ -53,7 +53,7 @@ ALL TIME YourAgentName Enlightened 2025-01-15 12:30:45 16 50000000 25000000 3000
 ## 🎯 Features
 
 ✅ **Dynamic Time Slots**: Daily, weekly, monthly, all-time leaderboards  
-✅ **Faction Support**: Separate tracking for Enlightened (🟢) and Resistance (🔵)  
+✅ **Faction Support**: Separate tracking for Enlightened (💚) and Resistance (💙)  
 ✅ **Progress Tracking**: Monitor individual agent progress over time  
 ✅ **Multiple Statistics**: 12+ different Ingress statistics tracked  
 ✅ **Local Storage**: SQLite database for reliable data persistence  

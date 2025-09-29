@@ -5,7 +5,7 @@ A comprehensive Telegram bot for tracking and comparing Ingress agent statistics
 ## Features
 
 - 📊 **Dynamic Leaderboards**: Daily, weekly, monthly, and all-time rankings
-- 🟢🔵 **Faction Support**: Separate leaderboards for Enlightened (green) and Resistance (blue)
+- 💚💙 **Faction Support**: Separate leaderboards for Enlightened (green hearts) and Resistance (blue hearts)
 - 📈 **Progress Tracking**: Monitor individual agent progress over time
 - ⚔️ **Faction Comparison**: Compare faction statistics and performance
 - 💾 **Local Storage**: SQLite database for reliable data persistence
@@ -171,8 +171,8 @@ ALL TIME	YourAgent	Enlightened	2025-01-15	12:30:45	16	50000000	25000000	...
 
 ## Faction Colors
 
-- 🟢 **Enlightened**: Green
-- 🔵 **Resistance**: Blue
+- 💚 **Enlightened**: Green Heart
+- 💙 **Resistance**: Blue Heart
 
 ## Database Schema
 
