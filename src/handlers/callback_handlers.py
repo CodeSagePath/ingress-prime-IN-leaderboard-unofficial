@@ -66,7 +66,7 @@ class CallbackHandlers:
                     await context.bot.send_photo(
                         chat_id=query.message.chat_id,
                         photo=leaderboard_image,
-                        caption="🏆 Leaderboard with Faction Icons",
+                        caption="🏆 **Leaderboard with Faction Icons**",
                         reply_markup=reply_markup
                     )
                 except Exception as e:
@@ -86,8 +86,8 @@ class CallbackHandlers:
             # Update the message to show time selection feedback
             time_display = time_slot.replace('_', ' ').title()
             await query.edit_message_text(
-                f"⏰ **Time frame selected: {time_display}**\n\n"
-                "Now select a key element to view the leaderboard:",
+                f"⏰ **Time frame selected:** __{time_display}__\n\n"
+                "_Now select a key element to view the leaderboard:_",
                 reply_markup=self._create_key_element_keyboard(),
                 parse_mode='Markdown'
             )
@@ -97,7 +97,7 @@ class CallbackHandlers:
             await query.edit_message_text(
                 """🏆 **Ingress Leaderboard**
 
-Select a key element to view the leaderboard:""",
+_Select a key element to view the leaderboard:_""",
                 reply_markup=self._create_key_element_keyboard(),
                 parse_mode='Markdown'
             )

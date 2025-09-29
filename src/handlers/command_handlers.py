@@ -25,21 +25,21 @@ class CommandHandlers:
         welcome_text = f"""
 👋 **Welcome {user_first_name}!** 
 
-🎯 **I'm your Ingress Leaderboard Bot** - here to help you track and compare your statistics with other agents!
+🎯 **I'm your Ingress Leaderboard Bot** - _here to help you track and compare your statistics with other agents!_
 
 🚀 **Quick Start:**
-1. Copy your stats from Ingress (Agent → Statistics)
+1. Copy your stats from Ingress _(Agent → Statistics)_
 2. Send `/submit` and paste them here
 3. Check rankings with `/leaderboard`
 
 📋 **All Commands:**
-• `/submit` - Submit your Ingress statistics
-• `/leaderboard` - View current rankings 
-• `/progress` - Check your improvement over time
-• `/factions` - Compare Enlightened vs Resistance
-• `/help` - Quick help guide
+• `/submit` - __Submit your Ingress statistics__
+• `/leaderboard` - __View current rankings__ 
+• `/progress` - __Check your improvement over time__
+• `/factions` - __Compare Enlightened vs Resistance__
+• `/help` - __Quick help guide__
 
-💡 **Pro tip:** Just copy your stats from Ingress and send them directly - I'll handle the rest automatically!
+💡 **Pro tip:** Just copy your stats from Ingress and send them directly - _I'll handle the rest automatically!_
 
 Ready to see where you rank? 🏆
         """
@@ -77,9 +77,9 @@ Ready to see where you rank? 🏆
 
 {self.parser.get_quick_help()}
 
-**Next:** Just paste your copied statistics data here and I'll process it automatically!
+**Next:** Just paste your copied statistics data here and _I'll process it automatically!_
 
-❌ Send /cancel to cancel submission.
+❌ Send `/cancel` to cancel submission.
         """
         await update.message.reply_text(submit_text, parse_mode='Markdown')
         return
@@ -110,7 +110,7 @@ Ready to see where you rank? 🏆
                 for error in parse_errors[:2]:  # Show first 2 errors
                     warning_msg += f"• {error.user_message}\n"
                 if len(parse_errors) > 2:
-                    warning_msg += f"• ...and {len(parse_errors)-2} more issues\n"
+                    warning_msg += f"• _...and {len(parse_errors)-2} more issues_\n"
                 
                 await update.message.reply_text(warning_msg, parse_mode='Markdown')
             
@@ -144,7 +144,7 @@ Ready to see where you rank? 🏆
                         success_text = f"""
 🎉 **Stats submitted successfully!**
 
-{faction_emoji} **{parsed_data['agent_name']}** ({parsed_data['faction']})
+{faction_emoji} **{parsed_data['agent_name']}** _({parsed_data['faction']})_
 📅 {parsed_data['data_date']} at {parsed_data['data_time']}
 📊 Level **{parsed_data['level']}** • ⚡ **{self.parser.format_number(parsed_data['current_ap'])}** AP
 
@@ -153,16 +153,16 @@ Ready to see where you rank? 🏆
 • Compare progress: `/progress`
 • View faction stats: `/factions`
 
-Great work, Agent! 💪
+__Great work, Agent!__ 💪
                         """
                         await update.message.reply_text(success_text, parse_mode='Markdown')
                     else:
                         await update.message.reply_text(
                             f"❌ **Failed to save data for {parsed_data['agent_name']}**\n\n"
-                            "This might be a temporary issue. Please:\n"
+                            "_This might be a temporary issue._ Please:\n"
                             "• Try submitting again in a few moments\n"
                             "• Contact support if the problem persists\n\n"
-                            "Your data was parsed correctly, just couldn't save it this time.",
+                            "_Your data was parsed correctly, just couldn't save it this time._",
                             parse_mode='Markdown'
                         )
                 
@@ -170,10 +170,10 @@ Great work, Agent! 💪
                     logger.error(f"Database error for agent {parsed_data.get('agent_name', 'Unknown')}: {db_error}")
                     await update.message.reply_text(
                         f"❌ **Database error for {parsed_data.get('agent_name', 'your agent')}**\n\n"
-                        "There was a problem with the database operation.\n\n"
+                        "_There was a problem with the database operation._\n\n"
                         "💡 **This could be:**\n"
                         "• Temporary database connectivity issue\n"
-                        "• Duplicate data (already submitted same stats)\n"
+                        "• Duplicate data _(already submitted same stats)_\n"
                         "• Database is busy processing other requests\n\n"
                         "🔄 **Please try again in a few minutes.**",
                         parse_mode='Markdown'
@@ -186,11 +186,11 @@ Great work, Agent! 💪
                 summary_msg += f"✅ Successfully processed: **{success_count}** out of **{total_processed}** submissions"
                 
                 if success_count == total_processed:
-                    summary_msg += "\n\n🎉 All your data has been added to the leaderboards!"
+                    summary_msg += "\n\n🎉 _All your data has been added to the leaderboards!_"
                 elif success_count > 0:
-                    summary_msg += f"\n\n⚠️ {total_processed - success_count} submissions had issues (see messages above)"
+                    summary_msg += f"\n\n⚠️ **{total_processed - success_count}** submissions had issues _(see messages above)_"
                 else:
-                    summary_msg += "\n\n❌ None of the submissions could be processed successfully"
+                    summary_msg += "\n\n❌ _None of the submissions could be processed successfully_"
                 
                 await update.message.reply_text(summary_msg, parse_mode='Markdown')
 
@@ -201,12 +201,12 @@ Great work, Agent! 💪
             logger.error(f"Unexpected error processing data submission: {e}")
             await update.message.reply_text(
                 "❌ **Unexpected error occurred**\n\n"
-                "Something went wrong while processing your submission.\n\n"
+                "_Something went wrong while processing your submission._\n\n"
                 "💡 **Try this:**\n"
                 "• Use `/help` to check the data format\n"
                 "• Try submitting again with complete statistics\n"
                 "• Contact support if this keeps happening\n\n"
-                "Your data might have formatting issues or be incomplete.",
+                "_Your data might have formatting issues or be incomplete._",
                 parse_mode='Markdown'
             )
     
@@ -264,7 +264,7 @@ Great work, Agent! 💪
             leaderboard_image = self.leaderboard.generate_leaderboard_image(stat, time_slot, faction)
             await update.message.reply_photo(
                 photo=leaderboard_image,
-                caption="🏆 Leaderboard with Faction Icons"
+                caption="🏆 **Leaderboard with Faction Icons**"
             )
         except Exception as e:
             logger.error(f"Error sending leaderboard image: {e}")
@@ -278,7 +278,7 @@ Great work, Agent! 💪
         if not message:
             message = """🏆 **Ingress Leaderboard**
 
-Select a key element to view the leaderboard:"""
+_Select a key element to view the leaderboard:_"""
         
         # Create keyboard with key elements (3 buttons per row for better layout)
         keyboard = []
@@ -318,8 +318,9 @@ Select a key element to view the leaderboard:"""
         
         if not user_agents:
             await update.message.reply_text(
-                "Progress tracking requires your agent name to be registered. "
-                "Please submit data first using /submit, then try /progress again."
+                "📈 **Progress tracking requires your agent name to be registered.**\n\n"
+                "_Please submit data first using_ `/submit`_, then try_ `/progress` _again._",
+                parse_mode='Markdown'
             )
             return
         
@@ -361,9 +362,10 @@ Select a key element to view the leaderboard:"""
         # Validate stat
         if stat not in LEADERBOARD_STATS:
             await update.message.reply_text(
-                f"❌ Invalid statistic: '{stat}'\n\n"
-                f"Available statistics: {', '.join(LEADERBOARD_STATS[:10])}...\n"
-                f"Use `/stats` to see all available statistics."
+                f"❌ **Invalid statistic:** `{stat}`\n\n"
+                f"**Available statistics:** _{', '.join(LEADERBOARD_STATS[:10])}..._\n"
+                f"Use `/stats` to see __all available statistics__.",
+                parse_mode='Markdown'
             )
             return
         
@@ -373,11 +375,11 @@ Select a key element to view the leaderboard:"""
         # If user has multiple agents, show which agent's progress is being displayed
         if len(user_agents) > 1:
             other_agents = [agent for agent, faction in user_agents if agent != agent_name]
-            progress_text += f"\n\n💡 **Other agents:** {', '.join(other_agents)}\n"
-            progress_text += f"Use `/progress {other_agents[0]} {stat}` to see their progress."
+            progress_text += f"\n\n💡 **Other agents:** _{', '.join(other_agents)}_\n"
+            progress_text += f"Use `/progress {other_agents[0]} {stat}` to see __their progress__."
         
         # Add self-delete notice to the progress text
-        progress_text += f"\n\n⏰ **This message will self-delete in 30 seconds**"
+        progress_text += f"\n\n⏰ _**This message will self-delete in 30 seconds**_"
         
         # Send the progress message
         sent_message = await update.message.reply_text(progress_text, parse_mode='Markdown')
@@ -396,13 +398,13 @@ Select a key element to view the leaderboard:"""
             await sent_message.delete()
             
             # Send confirmation message
-            await update.message.reply_text("[result removed]")
+            await update.message.reply_text("_[result removed]_", parse_mode='Markdown')
             
         except Exception as e:
             logger.error(f"Error during auto-deletion of progress message: {e}")
             # If deletion fails, still send the confirmation message
             try:
-                await update.message.reply_text("[result removed - deletion failed]")
+                await update.message.reply_text("_[result removed - deletion failed]_", parse_mode='Markdown')
             except Exception as e2:
                 logger.error(f"Error sending deletion confirmation: {e2}")
     
@@ -426,14 +428,14 @@ Select a key element to view the leaderboard:"""
         """Handle /stats command - show available statistics"""
         stats_text = "📊 **Available Statistics for Leaderboards:**\n\n"
         for i, stat in enumerate(LEADERBOARD_STATS, 1):
-            stats_text += f"{i}. {stat}\n"
+            stats_text += f"{i}. **{stat}**\n"
         
         stats_text += "\n🕐 **Available Time Frames:**\n"
         for slot, days in TIME_SLOTS.items():
             if days:
-                stats_text += f"• {slot.replace('_', ' ').title()} ({days} days)\n"
+                stats_text += f"• **{slot.replace('_', ' ').title()}** _({days} days)_\n"
             else:
-                stats_text += f"• {slot.replace('_', ' ').title()}\n"
+                stats_text += f"• **{slot.replace('_', ' ').title()}**\n"
         
         await update.message.reply_text(stats_text, parse_mode='Markdown')
         return
@@ -445,7 +447,7 @@ Select a key element to view the leaderboard:"""
         # Check if user is authorized (you might want to restrict this to admins)
         # For now, let's allow any user to trigger sticker creation
         
-        await update.message.reply_text("🎨 Creating faction sticker set... This may take a moment.")
+        await update.message.reply_text("🎨 **Creating faction sticker set...** _This may take a moment._", parse_mode='Markdown')
         
         try:
             success = await self.leaderboard.sticker_manager.create_sticker_set(context.bot, user_id)
@@ -455,26 +457,26 @@ Select a key element to view the leaderboard:"""
                 success_text = f"""
 ✅ **Faction sticker set created successfully!**
 
-🎯 **Sticker Set:** {self.leaderboard.sticker_manager.sticker_set_title}
+🎯 **Sticker Set:** __{self.leaderboard.sticker_manager.sticker_set_title}__
 🔗 **Add to Telegram:** [Click here]({sticker_link})
 
-The bot will now use these custom faction stickers in leaderboards instead of emoji balls!
+_The bot will now use these custom faction stickers in leaderboards instead of emoji balls!_
 
 **Stickers included:**
-💚 Enlightened faction logo
-💙 Resistance faction logo
+💚 __Enlightened__ faction logo
+💙 __Resistance__ faction logo
 
-Created by: **H1GHT0WER**
+_Created by:_ **H1GHT0WER**
                 """
                 await update.message.reply_text(success_text, parse_mode='Markdown')
             else:
                 await update.message.reply_text(
                     "❌ **Failed to create sticker set**\n\n"
-                    "This could be due to:\n"
-                    "• Sticker set already exists\n"
-                    "• Image format issues\n"
-                    "• Telegram API limitations\n\n"
-                    "Please try again or contact support.",
+                    "_This could be due to:_\n"
+                    "• __Sticker set already exists__\n"
+                    "• __Image format issues__\n"
+                    "• __Telegram API limitations__\n\n"
+                    "_Please try again or contact support._",
                     parse_mode='Markdown'
                 )
         
@@ -482,7 +484,7 @@ Created by: **H1GHT0WER**
             logger.error(f"Error in create_stickers_command: {e}")
             await update.message.reply_text(
                 "❌ **Error creating sticker set**\n\n"
-                "An unexpected error occurred. Please try again later.",
+                "_An unexpected error occurred. Please try again later._",
                 parse_mode='Markdown'
             )
         
@@ -490,7 +492,7 @@ Created by: **H1GHT0WER**
     
     async def prepare_emoji_command(self, update: Update, context: CallbackContext):
         """Handle /prepare_emoji command - convert faction images to emoji format"""
-        await update.message.reply_text("🎨 Converting faction images to emoji format...")
+        await update.message.reply_text("🎨 **Converting faction images to emoji format...**", parse_mode='Markdown')
         
         try:
             prepared_emoji = self.leaderboard.sticker_manager.prepare_all_faction_emoji()
@@ -503,17 +505,17 @@ Created by: **H1GHT0WER**
 """
                 for faction, emoji_path in prepared_emoji.items():
                     file_size = emoji_path.stat().st_size
-                    success_text += f"• {faction}: {emoji_path.name} ({file_size} bytes)\n"
+                    success_text += f"• __{faction}__: `{emoji_path.name}` _({file_size} bytes)_\n"
                 
                 success_text += f"""
 📁 **Location:** `{list(prepared_emoji.values())[0].parent}`
 
-These emoji-format images can now be used as custom emoji in Telegram!
+_These emoji-format images can now be used as custom emoji in Telegram!_
 
 **Next steps:**
-1. Download the emoji files from the temp/emoji directory
-2. Upload them as custom emoji to your Telegram server/bot
-3. Update the bot configuration with the custom emoji IDs
+1. __Download__ the emoji files from the temp/emoji directory
+2. __Upload__ them as custom emoji to your Telegram server/bot
+3. __Update__ the bot configuration with the custom emoji IDs
                 """
                 
                 await update.message.reply_text(success_text, parse_mode='Markdown')
@@ -524,15 +526,15 @@ These emoji-format images can now be used as custom emoji in Telegram!
                         await update.message.reply_document(
                             document=emoji_file,
                             filename=f"{faction.lower()}_emoji.png",
-                            caption=f"{faction} faction emoji (100x100 PNG)"
+                            caption=f"__{faction}__ faction emoji _(100x100 PNG)_"
                         )
             else:
                 await update.message.reply_text(
                     "❌ **Failed to prepare emoji**\n\n"
-                    "This could be due to:\n"
-                    "• Image generation issues\n"
-                    "• File system permissions\n\n"
-                    "The bot now uses heart emojis (💚💙) instead of custom images.",
+                    "_This could be due to:_\n"
+                    "• __Image generation issues__\n"
+                    "• __File system permissions__\n\n"
+                    "_The bot now uses heart emojis (💚💙) instead of custom images._",
                     parse_mode='Markdown'
                 )
         
@@ -540,7 +542,7 @@ These emoji-format images can now be used as custom emoji in Telegram!
             logger.error(f"Error in prepare_emoji_command: {e}")
             await update.message.reply_text(
                 "❌ **Error preparing emoji**\n\n"
-                "An unexpected error occurred. Please try again later.",
+                "_An unexpected error occurred. Please try again later._",
                 parse_mode='Markdown'
             )
         
@@ -553,26 +555,26 @@ These emoji-format images can now be used as custom emoji in Telegram!
         if current_state == 'awaiting_data':
             await update.message.reply_text(
                 "✅ **Data submission cancelled**\n\n"
-                "No worries! When you're ready:\n"
+                "_No worries!_ When you're ready:\n"
                 "• Use `/submit` to try again\n"
                 "• Use `/help` if you need guidance\n\n"
-                "I'm here whenever you need me! 😊",
+                "__I'm here whenever you need me!__ 😊",
                 parse_mode='Markdown'
             )
         elif current_state:
             await update.message.reply_text(
                 "✅ **Operation cancelled**\n\n"
-                "Back to the main menu. Use `/start` to see all available commands!",
+                "_Back to the main menu._ Use `/start` to see all available commands!",
                 parse_mode='Markdown'
             )
         else:
             await update.message.reply_text(
                 "🤔 **Nothing to cancel**\n\n"
-                "You don't have any active operations running.\n\n"
+                "_You don't have any active operations running._\n\n"
                 "💡 **Want to do something?**\n"
-                "• `/submit` - Submit your Ingress stats\n"
-                "• `/leaderboard` - View rankings\n"
-                "• `/help` - Get help",
+                "• `/submit` - __Submit your Ingress stats__\n"
+                "• `/leaderboard` - __View rankings__\n"
+                "• `/help` - __Get help__",
                 parse_mode='Markdown'
             )
         return

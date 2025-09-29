@@ -47,7 +47,7 @@ Use /submit to submit your first statistics.
 
 Let's see who dominates the leaderboards! 🏆
         """
-        await update.message.reply_text(welcome_text)
+        await update.message.reply_text(welcome_text, parse_mode='Markdown')
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command"""
@@ -176,7 +176,7 @@ Just copy your stats line and paste it here. The bot will automatically parse an
         user_id = update.effective_user.id
         if user_id in self.user_states:
             del self.user_states[user_id]
-        await update.message.reply_text("❌ Operation cancelled.")
+        await update.message.reply_text("❌ **Operation cancelled.**", parse_mode='Markdown')
     
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle text messages"""
@@ -187,7 +187,9 @@ Just copy your stats line and paste it here. The bot will automatically parse an
             await self.process_data_submission(update, context)
         else:
             await update.message.reply_text(
-                "I don't understand that command. Use /help to see available commands."
+                "🤔 **I don't understand that command.**\n\n"
+                "_Use_ `/help` _to see available commands._",
+                parse_mode='Markdown'
             )
     
     async def process_data_submission(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -201,15 +203,19 @@ Just copy your stats line and paste it here. The bot will automatically parse an
             
             if not parsed_data:
                 await update.message.reply_text(
-                    "❌ Error parsing your data. Please check the format and try again.\n\n"
-                    "Use /submit to see the expected format."
+                    "❌ **Error parsing your data.**\n\n"
+                    "_Please check the format and try again._\n\n"
+                    "Use `/submit` to see the expected format.",
+                    parse_mode='Markdown'
                 )
                 return
             
             # Validate faction
             if not self.parser.validate_faction(parsed_data['faction']):
                 await update.message.reply_text(
-                    "❌ Invalid faction. Please use 'Enlightened' or 'Resistance'."
+                    "❌ **Invalid faction.**\n\n"
+                    "_Please use_ '__Enlightened__' _or_ '__Resistance__'_._",
+                    parse_mode='Markdown'
                 )
                 return
             
@@ -228,18 +234,20 @@ Just copy your stats line and paste it here. The bot will automatically parse an
                 success_text = f"""
 ✅ **Data submitted successfully!**
 
-{faction_emoji} Agent: {parsed_data['agent_name']}
-📅 Data Date: {parsed_data['data_date']}
-📊 Level: {parsed_data['level']}
-⚡ Current AP: {self.parser.format_number(parsed_data['current_ap'])}
+{faction_emoji} **Agent:** __{parsed_data['agent_name']}__
+📅 **Data Date:** _{parsed_data['data_date']}_
+📊 **Level:** __{parsed_data['level']}__
+⚡ **Current AP:** __{self.parser.format_number(parsed_data['current_ap'])}__
 
-Your data has been added to the leaderboards!
-Use /leaderboard to see current rankings.
+_Your data has been added to the leaderboards!_
+Use `/leaderboard` to see __current rankings__.
                 """
                 await update.message.reply_text(success_text, parse_mode='Markdown')
             else:
                 await update.message.reply_text(
-                    "❌ Error saving your data. Please try again later."
+                    "❌ **Error saving your data.**\n\n"
+                    "_Please try again later._",
+                    parse_mode='Markdown'
                 )
             
             # Clear user state
@@ -249,7 +257,9 @@ Use /leaderboard to see current rankings.
         except Exception as e:
             logger.error(f"Error processing data submission: {e}")
             await update.message.reply_text(
-                "❌ An error occurred while processing your data. Please try again."
+                "❌ **An error occurred while processing your data.**\n\n"
+                "_Please try again._",
+                parse_mode='Markdown'
             )
     
     async def handle_callback_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

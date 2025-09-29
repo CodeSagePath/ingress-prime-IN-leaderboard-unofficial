@@ -40,7 +40,7 @@ class DataParser:
                     f"❌ **Not enough data fields**\n\n"
                     f"I found only **{len(parts)} fields**, but need at least **50 fields** for a basic Ingress statistics submission.\n\n"
                     f"🤔 **Did you copy the complete statistics?**\n"
-                    f"Make sure to copy ALL your statistics from Ingress, not just the first few columns."
+                    f"Make sure to copy __ALL__ your statistics from Ingress, _not just the first few columns._"
                 )
             
             if len(parts) < 50:
@@ -49,9 +49,9 @@ class DataParser:
                     f"❌ **Incomplete statistics data**\n\n"
                     f"I found **{len(parts)} fields**, but need **50+ fields** for complete statistics.\n\n"
                     f"💡 **How to fix:**\n"
-                    f"• Copy your ENTIRE statistics table from Ingress\n"
-                    f"• Make sure you scroll right to see all columns\n"
-                    f"• Include all statistics, not just the visible ones"
+                    f"• Copy your __ENTIRE__ statistics table from Ingress\n"
+                    f"• Make sure you **scroll right** to see all columns\n"
+                    f"• Include _all statistics_, not just the visible ones"
                 )
             
             # Validate basic structure
@@ -74,9 +74,9 @@ class DataParser:
                     return None, ParseError(
                         "date_format", 
                         f"❌ **Invalid date/time format**\n\n"
-                        f"Expected: YYYY-MM-DD HH:MM:SS\n"
-                        f"Got: {' '.join(parts[4:6]) if len(parts) > 5 else 'missing'}\n\n"
-                        f"💡 Make sure your date is in YYYY-MM-DD format and time in HH:MM:SS"
+                        f"Expected: `YYYY-MM-DD HH:MM:SS`\n"
+                        f"Got: `{' '.join(parts[4:6]) if len(parts) > 5 else 'missing'}`\n\n"
+                        f"💡 Make sure your date is in `YYYY-MM-DD` format and time in `HH:MM:SS`"
                     )
                 offset = 6  # Start of numeric data
             else:
@@ -91,9 +91,9 @@ class DataParser:
                     return None, ParseError(
                         "date_format",
                         f"❌ **Invalid date/time format**\n\n"
-                        f"Expected: YYYY-MM-DD HH:MM:SS\n"
-                        f"Got: {' '.join(parts[3:5]) if len(parts) > 4 else 'missing'}\n\n"
-                        f"💡 Make sure your date is in YYYY-MM-DD format and time in HH:MM:SS"
+                        f"Expected: `YYYY-MM-DD HH:MM:SS`\n"
+                        f"Got: `{' '.join(parts[3:5]) if len(parts) > 4 else 'missing'}`\n\n"
+                        f"💡 Make sure your date is in `YYYY-MM-DD` format and time in `HH:MM:SS`"
                     )
                 offset = 5  # Start of numeric data
             
@@ -146,10 +146,10 @@ class DataParser:
             return None, ParseError(
                 "unexpected_error", 
                 f"❌ **Unexpected error while parsing**\n\n"
-                f"Something went wrong: {str(e)}\n\n"
+                f"_Something went wrong:_ `{str(e)}`\n\n"
                 f"💡 **Try this:**\n"
-                f"• Use /help to see data format examples\n"
-                f"• Make sure you copied complete statistics from Ingress"
+                f"• Use `/help` to see data format examples\n"
+                f"• Make sure you copied __complete statistics__ from Ingress"
             )
     
     def _validate_basic_structure(self, parts: List[str]) -> Optional[ParseError]:
@@ -160,12 +160,12 @@ class DataParser:
             return ParseError(
                 "basic_structure",
                 f"❌ **Missing basic information**\n\n"
-                f"I need at least: Time Span, Agent Name, Faction, Date, Time, and statistics.\n\n"
+                f"I need at least: _Time Span_, _Agent Name_, _Faction_, _Date_, _Time_, and statistics.\n\n"
                 f"💡 **Make sure you have:**\n"
-                f"• Agent name\n"
-                f"• Faction (Enlightened/Resistance)\n"  
-                f"• Date and time\n"
-                f"• Your complete statistics"
+                f"• **Agent name**\n"
+                f"• **Faction** _(Enlightened/Resistance)_\n"  
+                f"• **Date and time**\n"
+                f"• Your __complete statistics__"
             )
         
         # Validate faction (allowing for offset if "ALL TIME")
@@ -175,11 +175,11 @@ class DataParser:
             if faction not in ['enlightened', 'resistance']:
                 return ParseError(
                     "invalid_faction",
-                    f"❌ **Invalid faction: '{parts[faction_index]}'**\n\n"
+                    f"❌ **Invalid faction: `{parts[faction_index]}`**\n\n"
                     f"Faction must be either:\n"
-                    f"• **Enlightened** (green team)\n" 
-                    f"• **Resistance** (blue team)\n\n"
-                    f"💡 Make sure you copied the faction name correctly from Ingress"
+                    f"• **Enlightened** _(green team)_ 💚\n" 
+                    f"• **Resistance** _(blue team)_ 💙\n\n"
+                    f"💡 Make sure you copied the faction name __correctly__ from Ingress"
                 )
         
         return None
@@ -286,10 +286,10 @@ class DataParser:
 🎯 **Quick Guide: Submit Your Ingress Stats**
 
 **Step 1:** Open Ingress → Agent → Statistics
-**Step 2:** Copy your statistics (including headers is OK!)
+**Step 2:** Copy your statistics _(including headers is OK!)_
 **Step 3:** Send it here with `/submit`
 
-**That's it!** ✨ The bot handles the rest automatically.
+**That's it!** ✨ _The bot handles the rest automatically._
 
 🔗 Need detailed help? Use `/help_detailed`
         """
@@ -299,12 +299,12 @@ class DataParser:
         return """
 📋 **Complete Data Submission Guide**
 
-**🚀 Easiest Method:**
+🚀 **Easiest Method:**
 1. Open Ingress app → Agent tab → Statistics  
-2. Select and copy ALL your statistics
+2. Select and copy **ALL** your statistics
 3. Send: `/submit` followed by your copied data
 
-**✅ Examples that work:**
+💎 **Perfect Examples:**
 ```
 /submit
 ALL TIME YourAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 ...
@@ -314,19 +314,19 @@ ALL TIME YourAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 ...
 /submit YourAgent Resistance 2025-01-15 12:30:45 16 50000000 25000000 ...
 ```
 
-**📝 What you need:**
-• **Agent name** (your Ingress username)
-• **Faction**: Enlightened or Resistance  
-• **Date**: YYYY-MM-DD format
-• **Time**: HH:MM:SS format
+📝 **What you need:**
+• **Agent name** _(your Ingress username)_
+• **Faction**: __Enlightened__ or __Resistance__  
+• **Date**: `YYYY-MM-DD` format
+• **Time**: `HH:MM:SS` format
 • **All 60+ statistics** from Ingress
 
-**💡 Pro Tips:**
-• Copy with headers - I'll skip them automatically
-• Make sure to scroll right in Ingress to get ALL stats
-• You can submit multiple time periods at once
+💡 **Pro Tips:**
+• Copy with headers - _I'll skip them automatically_
+• Make sure to **scroll right** in Ingress to get **ALL** stats
+• You can submit **multiple time periods** at once
 
-**🆘 Still stuck?** Copy your stats exactly as they appear in Ingress and send them!
+🆘 **Still stuck?** Copy your stats exactly as they appear in Ingress and send them!
         """
     
     def _clean_data_line(self, line: str) -> str:
@@ -447,7 +447,7 @@ ALL TIME YourAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 ...
             return [], [ParseError(
                 "no_data",
                 "❌ **No data provided**\n\n"
-                "I didn't receive any statistics data to process.\n\n"
+                "_I didn't receive any statistics data to process._\n\n"
                 "💡 **How to submit:**\n"
                 "1. Copy your statistics from Ingress\n"
                 "2. Send `/submit` followed by your data"
@@ -475,11 +475,11 @@ ALL TIME YourAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 ...
             errors.append(ParseError(
                 "only_headers",
                 f"❌ **Only found headers, no data**\n\n"
-                f"I skipped {header_lines_skipped} header lines but found no actual statistics data.\n\n"
+                f"I skipped **{header_lines_skipped}** header lines but found no actual statistics data.\n\n"
                 f"💡 **Make sure to include:**\n"
-                f"• Your agent name and faction\n"
-                f"• The complete statistics row from Ingress\n"
-                f"• Not just the column headers"
+                f"• Your **agent name** and **faction**\n"
+                f"• The __complete statistics row__ from Ingress\n"
+                f"• _Not just the column headers_"
             ))
         
         return results, errors
