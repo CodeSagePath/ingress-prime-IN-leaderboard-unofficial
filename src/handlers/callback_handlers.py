@@ -55,25 +55,20 @@ class CallbackHandlers:
                 ]]
                 reply_markup = InlineKeyboardMarkup(back_keyboard)
                 
-                # Send as image with faction icons inline
+                # Send as text-based message
                 try:
-                    leaderboard_image = self.leaderboard.generate_leaderboard_image(
-                        selected_element['stat_name'], time_slot, faction
-                    )
-                    
-                    # Delete the original message and send new photo message
-                    await query.delete_message()
-                    await context.bot.send_photo(
-                        chat_id=query.message.chat_id,
-                        photo=leaderboard_image,
-                        caption="🏆 **Leaderboard with Faction Icons**",
+                    await query.edit_message_text(
+                        leaderboard_text, 
+                        parse_mode='Markdown',
                         reply_markup=reply_markup
                     )
                 except Exception as e:
-                    logger.error(f"Error sending leaderboard image: {e}")
-                    # Fallback to text-only
-                    await query.edit_message_text(
-                        leaderboard_text, 
+                    logger.error(f"Error sending leaderboard text: {e}")
+                    # Fallback message if editing fails
+                    await query.delete_message()
+                    await context.bot.send_message(
+                        chat_id=query.message.chat_id,
+                        text=leaderboard_text,
                         parse_mode='Markdown',
                         reply_markup=reply_markup
                     )
