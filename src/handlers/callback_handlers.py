@@ -49,11 +49,14 @@ class CallbackHandlers:
                     selected_element['stat_name'], time_slot, faction
                 )
                 
-                # Create back button
-                back_keyboard = [[
-                    InlineKeyboardButton("🔙 Back to Selection", callback_data="back_to_selection")
-                ]]
-                reply_markup = InlineKeyboardMarkup(back_keyboard)
+                # Create back button with navigation
+                keyboard = [
+                    [InlineKeyboardButton("🔙 Back to Selection", callback_data="back_to_selection")],
+                    [InlineKeyboardButton("📊 Submit", callback_data="nav_submit"),
+                     InlineKeyboardButton("📈 Progress", callback_data="nav_progress"),
+                     InlineKeyboardButton("⚔️ Factions", callback_data="nav_factions")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
                 
                 # Send as text-based message
                 try:
@@ -97,6 +100,10 @@ _Select a key element to view the leaderboard:_""",
                 parse_mode='Markdown'
             )
         
+        elif data.startswith('nav_'):
+            # Handle navigation buttons
+            await self._handle_navigation_callback(query, data)
+        
         elif data.startswith('lb_'):
             # Legacy leaderboard callback (for backward compatibility)
             parts = data.split('_')
@@ -107,7 +114,8 @@ _Select a key element to view the leaderboard:_""",
                 
                 # Generate leaderboard text with custom faction stickers
                 leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
-                await query.edit_message_text(leaderboard_text, parse_mode='Markdown')
+                reply_markup = self._create_navigation_buttons()
+                await query.edit_message_text(leaderboard_text, reply_markup=reply_markup, parse_mode='Markdown')
         
         return
     
@@ -136,3 +144,110 @@ _Select a key element to view the leaderboard:_""",
         keyboard.append(time_row)
         
         return InlineKeyboardMarkup(keyboard)
+    
+    def _create_navigation_buttons(self):
+        """Create navigation buttons for callback handlers"""
+        buttons = []
+        
+        # Main navigation buttons
+        nav_buttons = [
+            ("📊 Submit", "nav_submit"),
+            ("🏆 Leaderboard", "nav_leaderboard"), 
+            ("📈 Progress", "nav_progress"),
+            ("⚔️ Factions", "nav_factions"),
+            ("❓ Help", "nav_help")
+        ]
+        
+        # Create rows of 2-3 buttons each for better mobile display
+        row = []
+        for text, callback_data in nav_buttons:
+            row.append(InlineKeyboardButton(text, callback_data=callback_data))
+            if len(row) == 2:
+                buttons.append(row)
+                row = []
+        
+        # Add remaining buttons if any
+        if row:
+            buttons.append(row)
+        
+        return InlineKeyboardMarkup(buttons)
+    
+    async def _handle_navigation_callback(self, query, data):
+        """Handle navigation button callbacks"""
+        user_id = query.from_user.id
+        
+        if data == 'nav_submit':
+            await query.edit_message_text(
+                """📊 **Ready to submit your stats!**
+
+Copy your statistics from Ingress _(Agent → Statistics)_ and paste them as a message.
+
+**Next:** Send your copied statistics data.""",
+                reply_markup=self._create_navigation_buttons(),
+                parse_mode='Markdown'
+            )
+        
+        elif data == 'nav_leaderboard':
+            await query.edit_message_text(
+                """🏆 **Ingress Leaderboard**
+
+_Select a key element to view the leaderboard:_""",
+                reply_markup=self._create_key_element_keyboard(),
+                parse_mode='Markdown'
+            )
+        
+        elif data == 'nav_progress':
+            await query.edit_message_text(
+                """📈 **Progress Tracking**
+
+Track your improvement over time! If you have submitted stats before, you can see your progress.
+
+**Usage:** Send your latest stats to see progress.""",
+                reply_markup=self._create_navigation_buttons(),
+                parse_mode='Markdown'
+            )
+        
+        elif data == 'nav_factions':
+            await query.edit_message_text(
+                """⚔️ **Faction Comparison**
+
+Compare Enlightened vs Resistance performance across all statistics.
+
+**Time Frames:** All Time, Monthly, Weekly""",
+                reply_markup=self._create_navigation_buttons(),
+                parse_mode='Markdown'
+            )
+        
+        elif data == 'nav_help':
+            await query.edit_message_text(
+                """❓ **Quick Help**
+
+📊 **Data Format:**
+Copy exactly from Ingress → Agent → Statistics
+
+**Example:**
+```
+Agent Name: YourAgentName
+Faction: Enlightened/Resistance
+Current AP: 12,345,678
+```
+
+**Supported:** All Ingress statistics are supported!""",
+                reply_markup=self._create_navigation_buttons(),
+                parse_mode='Markdown'
+            )
+        
+        elif data == 'nav_stats':
+            await query.edit_message_text(
+                """📊 **Available Statistics**
+
+All Ingress statistics are supported including:
+• Current AP
+• Distance Walked
+• Portals Discovered
+• And many more!
+
+**Time Frames:** All Time, Monthly (30 days), Weekly (7 days)""",
+                reply_markup=self._create_navigation_buttons(),
+                parse_mode='Markdown'
+            )
