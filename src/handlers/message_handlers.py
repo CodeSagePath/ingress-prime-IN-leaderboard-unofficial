@@ -3,7 +3,7 @@ Message handlers for the Ingress Leaderboard Bot
 """
 
 import logging
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 from config.settings import BOT_USERNAME
 
@@ -186,3 +186,34 @@ class MessageHandlers:
         temp_handler = CommandHandlers(self.db, self.leaderboard, self.parser)
         await temp_handler._process_submission_data(update, context, data_text)
         return
+    
+    def _create_navigation_buttons(self, exclude_current=None):
+        """Create navigation buttons for message handlers"""
+        buttons = []
+        
+        # Main navigation buttons
+        nav_buttons = [
+            ("📊 Submit", "nav_submit"),
+            ("🏆 Leaderboard", "nav_leaderboard"), 
+            ("📈 Progress", "nav_progress"),
+            ("⚔️ Factions", "nav_factions"),
+            ("❓ Help", "nav_help")
+        ]
+        
+        # Filter out excluded button
+        if exclude_current:
+            nav_buttons = [btn for btn in nav_buttons if btn[1] != exclude_current]
+        
+        # Create rows of 2-3 buttons each for better mobile display
+        row = []
+        for text, callback_data in nav_buttons:
+            row.append(InlineKeyboardButton(text, callback_data=callback_data))
+            if len(row) == 2:
+                buttons.append(row)
+                row = []
+        
+        # Add remaining buttons if any
+        if row:
+            buttons.append(row)
+        
+        return InlineKeyboardMarkup(buttons)

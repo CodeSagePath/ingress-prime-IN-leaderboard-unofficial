@@ -77,6 +77,14 @@ class CallbackHandlers:
                         text="❌ Error displaying leaderboard. Please try again.",
                         parse_mode='Markdown'
                     )
+            else:
+                # Handle case when no matching key element is found
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="❌ **Unknown key element selected**\n\n_Please try selecting a different option._",
+                    reply_markup=self._create_key_element_keyboard(),
+                    parse_mode='Markdown'
+                )
         
         elif data.startswith('time_'):
             # Time slot selection
@@ -209,14 +217,32 @@ _Select a key element to view the leaderboard:_""",
         
         try:
             if data == 'nav_submit':
+                # Set user state for data submission and show detailed instructions
+                context.user_data['state'] = 'awaiting_data'
+                
+                submit_text = f"""📊 **Ready to submit your stats!**
+
+{self.parser.get_quick_help()}
+
+**Next Steps:**
+1. Copy ALL your statistics from Ingress (Agent → Statistics)
+2. Paste them here as your next message
+3. I'll automatically process and add them to leaderboards
+
+❌ Send `/cancel` to cancel anytime."""
+
+                # Create action buttons for submission
+                submit_keyboard = [
+                    [InlineKeyboardButton("❓ Need Help?", callback_data="nav_help"),
+                     InlineKeyboardButton("❌ Cancel", callback_data="nav_cancel_submit")],
+                    [InlineKeyboardButton("🔙 Back to Menu", callback_data="nav_main_menu")]
+                ]
+                submit_reply_markup = InlineKeyboardMarkup(submit_keyboard)
+                
                 await context.bot.send_message(
                     chat_id=query.message.chat_id,
-                    text="""📊 **Ready to submit your stats!**
-
-Copy your statistics from Ingress _(Agent → Statistics)_ and paste them as a message.
-
-**Next:** Send your copied statistics data.""",
-                    reply_markup=self._create_navigation_buttons(),
+                    text=submit_text,
+                    reply_markup=submit_reply_markup,
                     parse_mode='Markdown'
                 )
             
@@ -231,16 +257,66 @@ _Select a key element to view the leaderboard:_""",
                 )
             
             elif data == 'nav_progress':
-                await context.bot.send_message(
-                    chat_id=query.message.chat_id,
-                    text="""📈 **Progress Tracking**
+                user_id = query.from_user.id
+                
+                # Check if user has any agents registered
+                user_agents = self.db.get_agents_by_user_id(user_id)
+                
+                if not user_agents:
+                    # No agents found - guide user to submit data first
+                    progress_keyboard = [
+                        [InlineKeyboardButton("📊 Submit Data First", callback_data="nav_submit"),
+                         InlineKeyboardButton("❓ Help", callback_data="nav_help")],
+                        [InlineKeyboardButton("🔙 Back to Menu", callback_data="nav_main_menu")]
+                    ]
+                    progress_reply_markup = InlineKeyboardMarkup(progress_keyboard)
+                    
+                    await context.bot.send_message(
+                        chat_id=query.message.chat_id,
+                        text="""📈 **Progress Tracking**
 
-Track your improvement over time! If you have submitted stats before, you can see your progress.
+⚠️ **No agents found!** You need to submit your statistics first.
 
-**Usage:** Send your latest stats to see progress.""",
-                    reply_markup=self._create_navigation_buttons(),
-                    parse_mode='Markdown'
-                )
+**Quick Start:**
+1. Click "📊 Submit Data First" below
+2. Copy your stats from Ingress
+3. Paste them here
+4. Then you can track your progress!""",
+                        reply_markup=progress_reply_markup,
+                        parse_mode='Markdown'
+                    )
+                else:
+                    # User has agents - show their progress for Current AP
+                    agent_name = user_agents[0][0]
+                    stat = "Current AP"
+                    days = 30
+                    
+                    progress_text = self.leaderboard.generate_agent_progress(agent_name, user_id, stat, days)
+                    
+                    # Add additional info if user has multiple agents
+                    if len(user_agents) > 1:
+                        other_agents = [agent for agent, faction in user_agents if agent != agent_name]
+                        progress_text += f"\n\n💡 **Other agents:** _{', '.join(other_agents)}_"
+                    
+                    progress_text += f"\n\n⏰ **_This message will self-delete in 30 seconds_**"
+                    
+                    progress_keyboard = [
+                        [InlineKeyboardButton("📊 Submit New Data", callback_data="nav_submit"),
+                         InlineKeyboardButton("🏆 View Leaderboard", callback_data="nav_leaderboard")],
+                        [InlineKeyboardButton("🔙 Back to Menu", callback_data="nav_main_menu")]
+                    ]
+                    progress_reply_markup = InlineKeyboardMarkup(progress_keyboard)
+                    
+                    # Send progress message
+                    sent_message = await context.bot.send_message(
+                        chat_id=query.message.chat_id,
+                        text=progress_text,
+                        parse_mode='Markdown'
+                    )
+                    
+                    # Schedule auto-deletion after 30 seconds
+                    import asyncio
+                    asyncio.create_task(self._auto_delete_progress_message(context, query.message.chat_id, sent_message, progress_reply_markup))
             
             elif data == 'nav_factions':
                 await context.bot.send_message(
@@ -287,6 +363,64 @@ All Ingress statistics are supported including:
 
 **Time Frames:** All Time, Monthly (30 days), Weekly (7 days)""",
                     reply_markup=self._create_navigation_buttons(),
+                    parse_mode='Markdown'
+                )
+            
+            elif data == 'nav_help_detailed':
+                # Show the comprehensive detailed help from parser
+                detailed_help_text = self.parser.get_detailed_help()
+                
+                help_keyboard = [
+                    [InlineKeyboardButton("📊 Submit Now", callback_data="nav_submit"),
+                     InlineKeyboardButton("🏆 Leaderboard", callback_data="nav_leaderboard")],
+                    [InlineKeyboardButton("🔙 Back to Simple Help", callback_data="nav_help")]
+                ]
+                help_reply_markup = InlineKeyboardMarkup(help_keyboard)
+                
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text=detailed_help_text,
+                    reply_markup=help_reply_markup,
+                    parse_mode='Markdown'
+                )
+            
+            elif data == 'nav_cancel_submit':
+                # Cancel submission state
+                context.user_data.pop('state', None)
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="❌ **Submission cancelled.**",
+                    reply_markup=self._create_navigation_buttons(),
+                    parse_mode='Markdown'
+                )
+            
+            elif data == 'nav_main_menu':
+                # Show main menu
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text="""🏠 **Main Menu**
+
+**Choose an option:**""",
+                    reply_markup=self._create_navigation_buttons(),
+                    parse_mode='Markdown'
+                )
+            
+            elif data.startswith('factions_'):
+                # Handle faction time frame selection
+                time_slot = data.replace('factions_', '')
+                comparison_text = self.leaderboard.generate_faction_comparison(time_slot)
+                
+                faction_keyboard = [
+                    [InlineKeyboardButton("🔄 Change Time Frame", callback_data="nav_factions"),
+                     InlineKeyboardButton("🏆 View Leaderboard", callback_data="nav_leaderboard")],
+                    [InlineKeyboardButton("🔙 Back to Menu", callback_data="nav_main_menu")]
+                ]
+                faction_reply_markup = InlineKeyboardMarkup(faction_keyboard)
+                
+                await context.bot.send_message(
+                    chat_id=query.message.chat_id,
+                    text=comparison_text,
+                    reply_markup=faction_reply_markup,
                     parse_mode='Markdown'
                 )
         except Exception as e:
