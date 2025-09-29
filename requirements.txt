@@ -1,7 +1,7 @@
 # Core dependencies for Ingress Leaderboard Bot
 # Compatible with both standard systems and Termux
 
-python-telegram-bot==20.7
+python-telegram-bot==22.4
 requests>=2.28.0
 python-dotenv>=0.19.0
 
