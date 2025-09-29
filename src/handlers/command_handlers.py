@@ -259,18 +259,21 @@ __Great work, Agent!__ 💪
         if faction and faction not in ["Enlightened", "Resistance"]:
             faction = None
         
-        # Generate leaderboard as image with faction icons inline
+        # Generate leaderboard as text-based message
         try:
-            leaderboard_image = self.leaderboard.generate_leaderboard_image(stat, time_slot, faction)
-            await update.message.reply_photo(
-                photo=leaderboard_image,
-                caption="🏆 **Leaderboard with Faction Icons**"
-            )
-        except Exception as e:
-            logger.error(f"Error sending leaderboard image: {e}")
-            # Fallback to text
             leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
             await update.message.reply_text(leaderboard_text, parse_mode='Markdown')
+        except Exception as e:
+            logger.error(f"Error generating leaderboard: {e}")
+            await update.message.reply_text(
+                "❌ **Error generating leaderboard**\n\n"
+                "_There was a problem creating the leaderboard._\n\n"
+                "💡 **Please try:**\n"
+                "• Check if the statistic name is correct\n"
+                "• Try again in a few moments\n"
+                "• Use `/help` for available statistics",
+                parse_mode='Markdown'
+            )
         return
     
     async def _show_key_element_buttons(self, update: Update, context: CallbackContext, message: str = None):
@@ -379,7 +382,7 @@ _Select a key element to view the leaderboard:_"""
             progress_text += f"Use `/progress {other_agents[0]} {stat}` to see __their progress__."
         
         # Add self-delete notice to the progress text
-        progress_text += f"\n\n⏰ _**This message will self-delete in 30 seconds**_"
+        progress_text += f"\n\n⏰ **_This message will self-delete in 30 seconds_**"
         
         # Send the progress message
         sent_message = await update.message.reply_text(progress_text, parse_mode='Markdown')
