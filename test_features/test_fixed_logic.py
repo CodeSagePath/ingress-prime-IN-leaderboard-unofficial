@@ -2,7 +2,7 @@
 
 import sys
 import os
-sys.path.append('/home/codesagepath/Documents/TGBot/ingress-leaderboard')
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.services.ingress_prefix_detector import IngressPrefixDetector
 from config.settings import BOT_USERNAME
