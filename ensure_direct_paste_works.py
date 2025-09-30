@@ -13,7 +13,9 @@ def check_message_handlers():
     print("🔍 Checking message handlers implementation...")
     
     try:
-        with open('/home/codesagepath/Documents/TGBot/ingress-leaderboard/src/handlers/message_handlers.py', 'r') as f:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(script_dir, 'src', 'handlers', 'message_handlers.py')
+        with open(file_path, 'r') as f:
             content = f.read()
         
         # Check for key indicators of direct paste functionality
@@ -48,7 +50,9 @@ def check_bot_service():
     print("\n🔍 Checking bot service configuration...")
     
     try:
-        with open('/home/codesagepath/Documents/TGBot/ingress-leaderboard/src/services/bot_service.py', 'r') as f:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(script_dir, 'src', 'services', 'bot_service.py')
+        with open(file_path, 'r') as f:
             content = f.read()
         
         # Check if bot service is using MessageHandlers
