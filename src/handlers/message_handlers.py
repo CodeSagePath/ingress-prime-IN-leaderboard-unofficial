@@ -8,6 +8,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 from config.settings import BOT_USERNAME
 from ..services.prefix_detector import PrefixDetector
+from ..services.ingress_prefix_detector import IngressPrefixDetector
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class MessageHandlers:
         self.leaderboard = leaderboard_manager
         self.parser = data_parser
         self.prefix_detector = PrefixDetector(db_manager)
+        self.ingress_prefix_detector = IngressPrefixDetector()
     
     def _should_respond_to_message(self, update: Update, context: CallbackContext) -> bool:
         """Check if the bot should respond to this message"""
@@ -30,7 +32,14 @@ class MessageHandlers:
         if message.reply_to_message and message.reply_to_message.from_user.is_bot:
             # Check if it's replying to this bot specifically
             if message.reply_to_message.from_user.username == BOT_USERNAME:
-                return True
+                # In strict mode, only respond to replies that have the required prefix
+                if self.ingress_prefix_detector.strict_mode:
+                    message_text = message.text.strip() if message.text else ""
+                    should_process, reason, prefix_info = self.ingress_prefix_detector.should_process_message(message_text)
+                    return should_process
+                else:
+                    # In flexible mode, respond to all replies to bot messages
+                    return True
         
         # Check if the bot is mentioned in the message
         if message.entities:
@@ -41,13 +50,27 @@ class MessageHandlers:
                     if mention_text == f"@{BOT_USERNAME}":
                         return True
         
-        # RESTORED: Always respond to messages to allow direct copy-paste
+        # Check if message has the required prefix for Ingress data
+        message_text = message.text.strip() if message.text else ""
+        should_process, reason, prefix_info = self.ingress_prefix_detector.should_process_message(message_text)
+        
+        if should_process:
+            return True
+        
+        # In strict mode, don't respond to messages without required conditions
+        if self.ingress_prefix_detector.strict_mode:
+            return False
+        
+        # In flexible mode, respond to all messages
         return True
     
     async def handle_message(self, update: Update, context: CallbackContext):
         """Handle text messages with controlled submission acceptance"""
         # Check if we should respond to this message
-        if not self._should_respond_to_message(update, context):
+        should_respond = self._should_respond_to_message(update, context)
+        
+        if not should_respond:
+            # In strict mode, silently ignore messages without required conditions
             return
         
         user_id = update.effective_user.id
@@ -65,54 +88,134 @@ class MessageHandlers:
         message = update.message
         if message.reply_to_message and message.reply_to_message.from_user.is_bot:
             if message.reply_to_message.from_user.username == BOT_USERNAME:
-                # This is a reply to our bot message - check if it looks like stats data
-                detection_result = self._analyze_message(message_text, user_id)
-                if detection_result['type'] == 'ingress_data':
-                    # Valid stats data in reply to bot message - process it
-                    reply_markup = self._create_navigation_buttons(context_type="data_processing")
-                    await update.message.reply_text(
-                        "🎯 **Processing your stats data...**\n\n"
-                        "Thanks for replying with your statistics! ⚡",
-                        reply_markup=reply_markup,
-                        parse_mode='Markdown'
-                    )
-                    await self.process_data_submission(update, context)
-                    return
+                # This is a reply to our bot message
+                # In strict mode, only process if it has the required prefix or valid Ingress data
+                should_process_reply, reply_reason, reply_prefix_info = self.ingress_prefix_detector.should_process_message(message_text)
+                
+                if should_process_reply:
+                    # Has required prefix - process it
+                    detection_result = self._analyze_message(message_text, user_id)
+                    if detection_result['type'] == 'ingress_data':
+                        # Valid stats data in reply to bot message - process it
+                        reply_markup = self._create_navigation_buttons(context_type="data_processing")
+                        await update.message.reply_text(
+                            "🎯 **Processing your stats data...**\n\n"
+                            "Thanks for replying with your statistics! ⚡",
+                            reply_markup=reply_markup,
+                            parse_mode='Markdown'
+                        )
+                        await self.process_data_submission(update, context)
+                        return
+                    else:
+                        # Has prefix but not valid stats data
+                        reply_markup = self._create_navigation_buttons(context_type="data_help")
+                        await update.message.reply_text(
+                            "🤔 **I found the required prefix but don't recognize this as complete Ingress statistics**\n\n"
+                            "💡 **To submit your stats:**\n"
+                            "1. Go to Ingress → Agent → Statistics\n"
+                            "2. Copy ALL your statistics data\n"
+                            "3. Reply to this message with the complete data\n\n"
+                            "Or use the **Submit** button below for guided submission.",
+                            reply_markup=reply_markup,
+                            parse_mode='Markdown'
+                        )
+                        return
                 else:
-                    # Reply to bot but not valid stats data
-                    reply_markup = self._create_navigation_buttons(context_type="data_help")
-                    await update.message.reply_text(
-                        "🤔 **I don't recognize this as Ingress statistics**\n\n"
-                        "💡 **To submit your stats:**\n"
-                        "1. Go to Ingress → Agent → Statistics\n"
-                        "2. Copy ALL your statistics data\n"
-                        "3. Reply to this message with the complete data\n\n"
-                        "Or use the **Submit** button below for guided submission.",
-                        reply_markup=reply_markup,
-                        parse_mode='Markdown'
-                    )
-                    return
+                    # Reply to bot but no required prefix - in strict mode, ignore silently
+                    if self.ingress_prefix_detector.strict_mode:
+                        logger.info(f"Reply to bot message ignored in strict mode - no required prefix: {reply_reason}")
+                        return
+                    else:
+                        # In flexible mode, still try to help
+                        detection_result = self._analyze_message(message_text, user_id)
+                        if detection_result['type'] == 'ingress_data':
+                            # Valid stats data in reply to bot message - process it
+                            reply_markup = self._create_navigation_buttons(context_type="data_processing")
+                            await update.message.reply_text(
+                                "🎯 **Processing your stats data...**\n\n"
+                                "Thanks for replying with your statistics! ⚡",
+                                reply_markup=reply_markup,
+                                parse_mode='Markdown'
+                            )
+                            await self.process_data_submission(update, context)
+                            return
+                        else:
+                            # Reply to bot but not valid stats data
+                            reply_markup = self._create_navigation_buttons(context_type="data_help")
+                            await update.message.reply_text(
+                                "🤔 **I don't recognize this as Ingress statistics**\n\n"
+                                "💡 **To submit your stats:**\n"
+                                "1. Go to Ingress → Agent → Statistics\n"
+                                "2. Copy ALL your statistics data\n"
+                                "3. Reply to this message with the complete data\n\n"
+                                "Or use the **Submit** button below for guided submission.",
+                                reply_markup=reply_markup,
+                                parse_mode='Markdown'
+                            )
+                            return
+        
+        # Check if bot is mentioned - always respond to mentions
+        is_mentioned = False
+        original_message_text = update.message.text.strip()  # Keep original text for mention detection
+        if message.entities:
+            for entity in message.entities:
+                if entity.type == "mention":
+                    mention_text = original_message_text[entity.offset:entity.offset + entity.length]
+                    if mention_text == f"@{BOT_USERNAME}":
+                        is_mentioned = True
+                        break
+        
+        # NEW: Check if message should be processed based on "Time Span Agent Name" prefix requirements
+        should_process, reason, prefix_info = self.ingress_prefix_detector.should_process_message(message_text)
+        
+        # In strict mode, only respond if:
+        # 1. Message has required prefix, OR
+        # 2. Bot is mentioned, OR  
+        # 3. User is in submission state (already handled above), OR
+        # 4. Message is reply to bot (already handled above)
+        if not should_process and not is_mentioned:
+            # In strict mode, silently ignore messages without required prefix unless mentioned
+            logger.info(f"Message ignored due to strict mode - no required prefix found and bot not mentioned: {reason}")
+            return
+        
+        # If bot is mentioned but no prefix, provide guidance
+        if is_mentioned and not should_process:
+            guidance_message = self.ingress_prefix_detector.create_user_guidance_message(False, prefix_info)
+            reply_markup = self._create_navigation_buttons(context_type="data_help")
+            
+            await update.message.reply_text(
+                guidance_message,
+                reply_markup=reply_markup,
+                parse_mode='Markdown'
+            )
+            return
         
         # For all other messages (not in awaiting_data state, not replying to bot):
         # ENHANCED: Auto-process valid Ingress data with smart prefix detection
-        detection_result = self._analyze_message(message_text, user_id)
+        # Use clean text (with "Time Span Agent Name" prefix removed if found)
+        processing_text = self.ingress_prefix_detector.get_processing_text(message_text)
+        detection_result = self._analyze_message(processing_text, user_id)
+        
+        # Add prefix information to detection result
+        detection_result['ingress_prefix_info'] = prefix_info
         
         if detection_result['type'] == 'ingress_data':
             # Valid stats data - process it directly (ENHANCED WITH PREFIX SUPPORT)
             reply_markup = self._create_navigation_buttons(context_type="data_processing")
             
-            # Enhanced response with prefix acknowledgment
-            response_text = "🎯 **Processing your stats data...**\n\n"
+            # Enhanced response with "Time Span Agent Name" prefix acknowledgment
+            ingress_prefix_info = detection_result.get('ingress_prefix_info', {})
             
+            if ingress_prefix_info.get('pattern_found'):
+                response_text = self.ingress_prefix_detector.create_user_guidance_message(True, ingress_prefix_info)
+            else:
+                response_text = "🎯 **Processing your stats data...**\n\n"
+                response_text += "Thanks for submitting your statistics! ⚡"
+            
+            # Also check for legacy prefix detection
             if detection_result.get('prefix_info', {}).get('has_prefix'):
-                prefix_info = detection_result['prefix_info']
-                response_text += f"✨ **Prefix detected:** `{prefix_info['prefix_text']}` ({prefix_info['prefix_type']})\n"
-                if detection_result.get('enhanced_confidence'):
-                    response_text += "🚀 **Enhanced detection** - prefix helped me identify your data faster!\n\n"
-                else:
-                    response_text += "\n"
-            
-            response_text += "Thanks for submitting your statistics! ⚡"
+                legacy_prefix_info = detection_result['prefix_info']
+                response_text += f"\n\n✨ **Additional prefix detected:** `{legacy_prefix_info['prefix_text']}` ({legacy_prefix_info['prefix_type']})"
             
             await update.message.reply_text(
                 response_text,
@@ -385,12 +488,33 @@ class MessageHandlers:
         # Remove bot mention from data text if present
         data_text = data_text.replace(f"@{BOT_USERNAME}", "").strip()
         
-        # ENHANCED: Check for prefix and use clean data for processing
+        # ENHANCED: Check for "Time Span Agent Name" prefix first
+        should_process, reason, ingress_prefix_info = self.ingress_prefix_detector.should_process_message(data_text)
+        
+        if not should_process:
+            # In strict mode, don't process without required prefix
+            guidance_message = self.ingress_prefix_detector.create_user_guidance_message(False, ingress_prefix_info)
+            reply_markup = self._create_navigation_buttons(context_type="data_help")
+            
+            await update.message.reply_text(
+                guidance_message,
+                reply_markup=reply_markup,
+                parse_mode='Markdown'
+            )
+            return
+        
+        # Use clean text from Ingress prefix detector (removes "Time Span Agent Name" if found)
+        data_text = self.ingress_prefix_detector.get_processing_text(data_text)
+        
+        # Also check for legacy prefixes and clean further if needed
         prefix_result = self.prefix_detector.detect_prefix(data_text, user_id)
         if prefix_result['has_prefix']:
-            # Use the clean text (prefix removed) for data processing
+            # Use the clean text (legacy prefix removed) for data processing
             data_text = prefix_result['clean_text']
-            logger.info(f"Processing data with prefix '{prefix_result['prefix_text']}' removed")
+            logger.info(f"Processing data with legacy prefix '{prefix_result['prefix_text']}' removed")
+        
+        if ingress_prefix_info.get('pattern_found'):
+            logger.info(f"Processing data with 'Time Span Agent Name' prefix detected at {ingress_prefix_info.get('pattern_location', 'unknown location')}")
         
         # Import here to avoid circular imports
         from .command_handlers import CommandHandlers
@@ -427,7 +551,7 @@ class MessageHandlers:
         else:
             # Default - reduced set of main navigation
             nav_buttons = [
-                ("📊 Submit", "nav_submit"),
+                ("📊 Submit Stats", "nav_submit"),
                 ("🏆 Leaderboard", "nav_leaderboard"), 
                 ("❓ Help", "nav_help")
             ]

@@ -299,7 +299,8 @@ Use `/leaderboard` to see __current rankings__.
         application.add_handler(CommandHandler("stats", self.stats_command))
         application.add_handler(CommandHandler("cancel", self.cancel_command))
         
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
+        # NOTE: Message handler removed - using enhanced handler from bot_service.py instead
+        # application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
         application.add_handler(CallbackQueryHandler(self.handle_callback_query))
         
         # Start the bot
