@@ -177,6 +177,7 @@ _Select a key element to view the leaderboard:_""",
         
         # Main navigation buttons
         nav_buttons = [
+            ("🛠 Commands", "nav_commands"),
             ("📊 Submit", "nav_submit"),
             ("🏆 Leaderboard", "nav_leaderboard"), 
             ("📈 Progress", "nav_progress"),
@@ -199,17 +200,13 @@ _Select a key element to view the leaderboard:_""",
         return InlineKeyboardMarkup(buttons)
     
     async def _disable_previous_menu(self, query):
-        """Disable the previous menu by editing it to show 'send a new request'"""
+        """Auto-delete the previous menu message for cleaner UX"""
         try:
-            disabled_text = "🔒 **Menu disabled** - _Send a new request_"
-            await query.edit_message_text(
-                text=disabled_text,
-                reply_markup=None,  # Remove the keyboard
-                parse_mode='Markdown'
-            )
+            # Delete the previous menu message instead of editing it
+            await query.delete_message()
         except Exception as e:
-            # Silently handle cases where message can't be edited (e.g., too old)
-            logger.debug(f"Could not disable previous menu: {e}")
+            # Silently handle cases where message can't be deleted (e.g., too old, already deleted)
+            logger.debug(f"Could not delete previous menu: {e}")
     
     async def _handle_navigation_callback(self, query, data, context):
         """Handle navigation button callbacks"""
@@ -220,14 +217,14 @@ _Select a key element to view the leaderboard:_""",
                 # Set user state for data submission and show detailed instructions
                 context.user_data['state'] = 'awaiting_data'
                 
-                submit_text = f"""📊 **Ready to submit your stats!**
+                submit_text = """📊 **Ready to submit your stats!**
 
-{self.parser.get_quick_help()}
+🎯 **Quick Guide:**
+**Step 1:** Open Ingress → Agent → Statistics
+**Step 2:** Copy ALL your statistics and paste them here
+**Step 3:** I'll automatically process and add them to leaderboards
 
-**Next Steps:**
-1. Copy ALL your statistics from Ingress (Agent → Statistics)
-2. Paste them here as your next message
-3. I'll automatically process and add them to leaderboards
+**That's it!** ✨ _The bot handles the rest automatically._
 
 ❌ Send `/cancel` to cancel anytime."""
 
@@ -235,7 +232,7 @@ _Select a key element to view the leaderboard:_""",
                 submit_keyboard = [
                     [InlineKeyboardButton("❓ Need Help?", callback_data="nav_help"),
                      InlineKeyboardButton("❌ Cancel", callback_data="nav_cancel_submit")],
-                    [InlineKeyboardButton("🔙 Back to Menu", callback_data="nav_main_menu")]
+                    [InlineKeyboardButton("🏘 HOME", callback_data="nav_main_menu")]
                 ]
                 submit_reply_markup = InlineKeyboardMarkup(submit_keyboard)
                 
@@ -267,7 +264,7 @@ _Select a key element to view the leaderboard:_""",
                     progress_keyboard = [
                         [InlineKeyboardButton("📊 Submit Data First", callback_data="nav_submit"),
                          InlineKeyboardButton("❓ Help", callback_data="nav_help")],
-                        [InlineKeyboardButton("🔙 Back to Menu", callback_data="nav_main_menu")]
+                        [InlineKeyboardButton("🏘 HOME", callback_data="nav_main_menu")]
                     ]
                     progress_reply_markup = InlineKeyboardMarkup(progress_keyboard)
                     
@@ -303,7 +300,7 @@ _Select a key element to view the leaderboard:_""",
                     progress_keyboard = [
                         [InlineKeyboardButton("📊 Submit New Data", callback_data="nav_submit"),
                          InlineKeyboardButton("🏆 View Leaderboard", callback_data="nav_leaderboard")],
-                        [InlineKeyboardButton("🔙 Back to Menu", callback_data="nav_main_menu")]
+                        [InlineKeyboardButton("🏘 HOME", callback_data="nav_main_menu")]
                     ]
                     progress_reply_markup = InlineKeyboardMarkup(progress_keyboard)
                     
@@ -329,6 +326,46 @@ Compare Enlightened vs Resistance performance across all statistics.
                     reply_markup=self._create_navigation_buttons(),
                     parse_mode='Markdown'
                 )
+            
+            elif data == 'nav_commands':
+                # Show all available bot commands
+                from config.settings import BOT_COMMANDS
+                
+                # Escape underscores in command names to prevent Markdown parsing issues
+                command_lines = [
+                    f"/{cmd['command'].replace('_', '\\_')} - {cmd['description']}"
+                    for cmd in BOT_COMMANDS
+                ]
+
+                commands_text = """🛠 **Bot Commands Overview**
+
+""" + "\n".join(command_lines)
+
+                try:
+                    await context.bot.send_message(
+                        chat_id=query.message.chat_id,
+                        text=commands_text,
+                        reply_markup=self._create_navigation_buttons(),
+                        parse_mode='Markdown'
+                    )
+                except Exception as e:
+                    logger.error(f"Error sending commands list with Markdown: {e}")
+                    # Fallback: send without Markdown parsing
+                    try:
+                        # Remove markdown formatting for fallback
+                        fallback_text = commands_text.replace('**', '').replace('\\_', '_')
+                        await context.bot.send_message(
+                            chat_id=query.message.chat_id,
+                            text=fallback_text,
+                            reply_markup=self._create_navigation_buttons()
+                        )
+                    except Exception as fallback_error:
+                        logger.error(f"Error sending commands list fallback: {fallback_error}")
+                        await context.bot.send_message(
+                            chat_id=query.message.chat_id,
+                            text="❌ Error displaying commands list. Please try again.",
+                            reply_markup=self._create_navigation_buttons()
+                        )
             
             elif data == 'nav_help':
                 await context.bot.send_message(
@@ -413,7 +450,7 @@ All Ingress statistics are supported including:
                 faction_keyboard = [
                     [InlineKeyboardButton("🔄 Change Time Frame", callback_data="nav_factions"),
                      InlineKeyboardButton("🏆 View Leaderboard", callback_data="nav_leaderboard")],
-                    [InlineKeyboardButton("🔙 Back to Menu", callback_data="nav_main_menu")]
+                    [InlineKeyboardButton("🏘 HOME", callback_data="nav_main_menu")]
                 ]
                 faction_reply_markup = InlineKeyboardMarkup(faction_keyboard)
                 
