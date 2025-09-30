@@ -38,11 +38,11 @@ class MessageHandlers:
                     if mention_text == f"@{BOT_USERNAME}":
                         return True
         
-        # Don't respond to other messages
-        return False
+        # RESTORED: Always respond to messages to allow direct copy-paste
+        return True
     
     async def handle_message(self, update: Update, context: CallbackContext):
-        """Handle text messages with smart detection"""
+        """Handle text messages with controlled submission acceptance"""
         # Check if we should respond to this message
         if not self._should_respond_to_message(update, context):
             return
@@ -53,36 +53,70 @@ class MessageHandlers:
         # Remove bot mention from message text if present
         message_text = message_text.replace(f"@{BOT_USERNAME}", "").strip()
         
-        # Check if user is in data submission mode
+        # Check if user is in data submission mode (after /submit command or Submit button)
         if context.user_data.get('state') == 'awaiting_data':
             await self.process_data_submission(update, context)
             return
         
-        # Smart detection of different message types
+        # Check if this is a reply to a bot message (Submit button flow)
+        message = update.message
+        if message.reply_to_message and message.reply_to_message.from_user.is_bot:
+            if message.reply_to_message.from_user.username == BOT_USERNAME:
+                # This is a reply to our bot message - check if it looks like stats data
+                detection_result = self._analyze_message(message_text)
+                if detection_result['type'] == 'ingress_data':
+                    # Valid stats data in reply to bot message - process it
+                    reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
+                    await update.message.reply_text(
+                        "🎯 **Processing your stats data...**\n\n"
+                        "Thanks for replying with your statistics! ⚡",
+                        reply_markup=reply_markup,
+                        parse_mode='Markdown'
+                    )
+                    await self.process_data_submission(update, context)
+                    return
+                else:
+                    # Reply to bot but not valid stats data
+                    reply_markup = self._create_navigation_buttons()
+                    await update.message.reply_text(
+                        "🤔 **I don't recognize this as Ingress statistics**\n\n"
+                        "💡 **To submit your stats:**\n"
+                        "1. Go to Ingress → Agent → Statistics\n"
+                        "2. Copy ALL your statistics data\n"
+                        "3. Reply to this message with the complete data\n\n"
+                        "Or use the **Submit** button below for guided submission.",
+                        reply_markup=reply_markup,
+                        parse_mode='Markdown'
+                    )
+                    return
+        
+        # For all other messages (not in awaiting_data state, not replying to bot):
+        # RESTORED: Auto-process valid Ingress data for direct copy-paste support
         detection_result = self._analyze_message(message_text)
         
         if detection_result['type'] == 'ingress_data':
-            # Looks like valid Ingress data
+            # Valid stats data - process it directly (RESTORED FUNCTIONALITY)
             reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
             await update.message.reply_text(
-                "🎯 **Detected Ingress statistics!**\n\n"
-                "Processing your data automatically... ⚡",
+                "🎯 **Processing your stats data...**\n\n"
+                "Thanks for submitting your statistics! ⚡",
                 reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
             await self.process_data_submission(update, context)
+            return
         
         elif detection_result['type'] == 'partial_data':
-            # Looks like incomplete Ingress data
+            # Looks like incomplete stats data - provide guidance
             reply_markup = self._create_navigation_buttons()
             await update.message.reply_text(
-                "🤔 **This looks like partial Ingress data**\n\n"
-                f"I can see some statistics, but {detection_result['issue']}\n\n"
-                "💡 **To fix this:**\n"
-                "1. Go to Ingress → Agent → Statistics\n"
-                "2. Copy ALL your statistics (scroll right to see everything)\n"
-                "3. Send the complete data here\n\n"
-                "Or tap **Help** below for detailed instructions.",
+                "📊 **I can see partial Ingress statistics data!**\n\n"
+                f"⚠️ **Issue detected:** {detection_result.get('issue', 'Incomplete data')}\n\n"
+                "💡 **Please ensure you copy ALL statistics from:**\n"
+                "Ingress → Agent → Statistics\n\n"
+                "**Or use these methods:**\n"
+                "• `/submit <your complete stats data>`\n"
+                "• Tap **Submit** below for guided submission",
                 reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
@@ -92,9 +126,9 @@ class MessageHandlers:
             reply_markup = self._create_navigation_buttons()
             await update.message.reply_text(
                 "🤔 **Are you trying to submit Ingress statistics?**\n\n"
-                "If yes:\n"
-                "• Tap **Submit** below and follow the guide\n"
-                "• Or just send your complete stats data\n\n"
+                "📋 **Proper submission methods:**\n"
+                "• Use `/submit <your stats data>`\n"
+                "• Or tap **Submit** below and reply with your data\n\n"
                 "Tap **Help** for detailed instructions.",
                 reply_markup=reply_markup,
                 parse_mode='Markdown'
@@ -109,7 +143,7 @@ class MessageHandlers:
                 "• **Submit** - Add your Ingress statistics\n"
                 "• **Leaderboard** - View current rankings\n"
                 "• **Help** - Quick help guide\n\n"
-                "💡 Just copy your stats from Ingress and send them to me!\n"
+                "💡 **To submit stats:** Use `/submit <data>` or tap Submit button!\n"
                 "_Use the buttons below for easy navigation._",
                 reply_markup=reply_markup,
                 parse_mode='Markdown'
@@ -123,9 +157,9 @@ class MessageHandlers:
         if len(parts) < 3:
             return {'type': 'unrecognized'}
         
-        # Check for valid faction keywords
+        # Check for valid faction keywords (search in entire text, not just first parts)
         factions = ["Enlightened", "Resistance", "enlightened", "resistance"]
-        has_faction = any(part in factions for part in parts[:6])  # Check first few parts
+        has_faction = any(faction in text for faction in factions)
         
         # Look for "ALL TIME" pattern
         if len(parts) >= 2 and parts[0] == "ALL" and parts[1] == "TIME":
