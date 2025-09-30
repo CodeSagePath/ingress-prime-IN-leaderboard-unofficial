@@ -5,7 +5,7 @@ Comprehensive verification script for the submission fix
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src'))
 
 def test_submission_scenarios():
     """Test all submission scenarios to verify the fix"""
