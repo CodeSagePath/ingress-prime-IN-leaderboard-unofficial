@@ -5,7 +5,7 @@ Test the progress command logic directly
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src'))
 
 from database.manager import DatabaseManager
 from services.leaderboard_service import LeaderboardManager
