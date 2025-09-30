@@ -5,7 +5,7 @@ Test script to verify the submission fix is working correctly
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src'))
 
 from unittest.mock import Mock, AsyncMock
 from src.handlers.message_handlers import MessageHandlers
