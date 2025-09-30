@@ -84,6 +84,8 @@ Ready to see where you rank? 🏆"""
 
 {self.parser.get_quick_help()}
 
+⚠️ **In groups: REPLY to this message when pasting your stats!**
+
 ❌ Send `/cancel` to cancel."""
         
         reply_markup = self._create_navigation_buttons(exclude_current="nav_submit", context_type="minimal")

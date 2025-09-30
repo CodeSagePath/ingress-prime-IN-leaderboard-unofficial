@@ -259,6 +259,8 @@ _Select a key element to view the leaderboard:_""",
 
 **That's it!** ✨ _The bot handles the rest automatically._
 
+⚠️ **In groups: REPLY to this message when pasting your stats!**
+
 ❌ Send `/cancel` to cancel anytime."""
 
                 # Create action buttons for submission
