@@ -53,3 +53,6 @@ Thumbs.db
 config/local_settings.py
 .env
 
+# Additional debugging files
+debug_handler_flow.py
+debug_message_flow.py
