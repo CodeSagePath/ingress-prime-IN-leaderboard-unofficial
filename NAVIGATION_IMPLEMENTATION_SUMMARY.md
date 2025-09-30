@@ -27,7 +27,7 @@ Your Telegram Ingress Leaderboard Bot now has **comprehensive navigation buttons
 
 The buttons are arranged in mobile-friendly rows:
 ```
-📊 Submit    🏆 Leaderboard
+📊 Submit Stats    🏆 Leaderboard
 📈 Progress  ⚔️ Factions  
      ❓ Help
 ```
