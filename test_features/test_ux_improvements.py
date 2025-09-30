@@ -5,7 +5,7 @@ Test script for UX improvements to the Ingress Leaderboard Bot
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src'))
 
 from parsers.data_parser import DataParser, ParseError
 
