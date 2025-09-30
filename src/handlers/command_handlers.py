@@ -33,7 +33,7 @@ class CommandHandlers:
 
 Ready to see where you rank? 🏆"""
         
-        reply_markup = self._create_navigation_buttons()
+        reply_markup = self._create_navigation_buttons(context_type="welcome")
         await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
@@ -55,14 +55,14 @@ Ready to see where you rank? 🏆"""
     async def help_command(self, update: Update, context: CallbackContext):
         """Handle /help command - show quick help"""
         help_text = self.parser.get_quick_help()
-        reply_markup = self._create_navigation_buttons(exclude_current="nav_help")
+        reply_markup = self._create_navigation_buttons(exclude_current="nav_help", context_type="help")
         await update.message.reply_text(help_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     async def help_detailed_command(self, update: Update, context: CallbackContext):
         """Handle /help_detailed command - show comprehensive help"""
         help_text = self.parser.get_detailed_help()
-        reply_markup = self._create_navigation_buttons(exclude_current="nav_help")
+        reply_markup = self._create_navigation_buttons(exclude_current="nav_help", context_type="help")
         await update.message.reply_text(help_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
@@ -86,7 +86,7 @@ Ready to see where you rank? 🏆"""
 
 ❌ Send `/cancel` to cancel."""
         
-        reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
+        reply_markup = self._create_navigation_buttons(exclude_current="nav_submit", context_type="minimal")
         await update.message.reply_text(submit_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
@@ -107,11 +107,7 @@ Ready to see where you rank? 🏆"""
                 
                 error_message += f"\n\n{self.parser.get_quick_help()}"
                 
-                keyboard = [
-                    [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
-                     InlineKeyboardButton("❓ Help", callback_data="nav_help")]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
+                reply_markup = self._create_navigation_buttons(context_type="error")
                 await update.message.reply_text(error_message, reply_markup=reply_markup, parse_mode='Markdown')
                 return
             
@@ -123,19 +119,11 @@ Ready to see where you rank? 🏆"""
                 if len(parse_errors) > 2:
                     warning_msg += f"• _...and {len(parse_errors)-2} more issues_\n"
                 
-                keyboard = [
-                    [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
-                     InlineKeyboardButton("❓ Help", callback_data="nav_help")]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
+                reply_markup = self._create_navigation_buttons(context_type="error")
                 await update.message.reply_text(warning_msg, reply_markup=reply_markup, parse_mode='Markdown')
             
             if not parsed_data_list:
-                keyboard = [
-                    [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
-                     InlineKeyboardButton("❓ Help", callback_data="nav_help")]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
+                reply_markup = self._create_navigation_buttons(context_type="error")
                 await update.message.reply_text(
                     "❌ **No valid data processed**\n\n" + 
                     self.parser.get_quick_help(),
@@ -171,7 +159,7 @@ Ready to see where you rank? 🏆"""
 
 __Great work, Agent!__ 💪"""
                         
-                        reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
+                        reply_markup = self._create_navigation_buttons(context_type="success")
                         await update.message.reply_text(success_text, reply_markup=reply_markup, parse_mode='Markdown')
                     else:
                         keyboard = [
@@ -213,7 +201,7 @@ __Great work, Agent!__ 💪"""
                 else:
                     summary_msg += "\n\n❌ _None of the submissions could be processed successfully_"
                 
-                reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
+                reply_markup = self._create_navigation_buttons(context_type="success")
                 await update.message.reply_text(summary_msg, reply_markup=reply_markup, parse_mode='Markdown')
 
             # Clear user state if it was set
@@ -285,7 +273,7 @@ __Great work, Agent!__ 💪"""
         # Generate leaderboard as text-based message
         try:
             leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
-            reply_markup = self._create_navigation_buttons(exclude_current="nav_leaderboard")
+            reply_markup = self._create_navigation_buttons(context_type="leaderboard")
             await update.message.reply_text(leaderboard_text, reply_markup=reply_markup, parse_mode='Markdown')
         except Exception as e:
             logger.error(f"Error generating leaderboard: {e}")
@@ -629,19 +617,59 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
             )
         return
     
-    def _create_navigation_buttons(self, exclude_current=None):
-        """Create navigation buttons for all commands"""
+    def _create_navigation_buttons(self, exclude_current=None, context_type="default"):
+        """Create contextual navigation buttons based on the situation"""
         buttons = []
         
-        # Main navigation buttons
-        nav_buttons = [
-            ("🛠 Commands", "nav_commands"),
-            ("📊 Submit", "nav_submit"),
-            ("🏆 Leaderboard", "nav_leaderboard"), 
-            ("📈 Progress", "nav_progress"),
-            ("⚔️ Factions", "nav_factions"),
-            ("❓ Help", "nav_help")
-        ]
+        # Define different button sets for different contexts
+        if context_type == "welcome":
+            # Welcome screen - show main actions
+            nav_buttons = [
+                ("📊 Submit Stats", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard"),
+                ("❓ Help", "nav_help")
+            ]
+        elif context_type == "success":
+            # After successful submission - show what to do next
+            nav_buttons = [
+                ("🏆 View Leaderboard", "nav_leaderboard"),
+                ("⚔️ Faction Stats", "nav_factions"),
+                ("📊 Submit More", "nav_submit")
+            ]
+        elif context_type == "error":
+            # Error situations - show retry and help
+            nav_buttons = [
+                ("🔄 Try Again", "nav_submit"),
+                ("❓ Help", "nav_help")
+            ]
+        elif context_type == "leaderboard":
+            # After showing leaderboard - show related actions
+            nav_buttons = [
+                ("⚔️ Faction Comparison", "nav_factions"),
+                ("📈 Progress", "nav_progress"),
+                ("📊 Submit Stats", "nav_submit")
+            ]
+        elif context_type == "help":
+            # Help screens - show main actions
+            nav_buttons = [
+                ("📊 Submit Stats", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard"),
+                ("🛠 All Commands", "nav_commands")
+            ]
+        elif context_type == "minimal":
+            # Minimal context - just essential actions
+            nav_buttons = [
+                ("📊 Submit", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard")
+            ]
+        else:
+            # Default - reduced set of main navigation
+            nav_buttons = [
+                ("📊 Submit", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard"), 
+                ("⚔️ Factions", "nav_factions"),
+                ("❓ Help", "nav_help")
+            ]
         
         # Filter out current command if specified
         if exclude_current:

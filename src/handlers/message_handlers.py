@@ -66,7 +66,7 @@ class MessageHandlers:
                 detection_result = self._analyze_message(message_text)
                 if detection_result['type'] == 'ingress_data':
                     # Valid stats data in reply to bot message - process it
-                    reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
+                    reply_markup = self._create_navigation_buttons(context_type="data_processing")
                     await update.message.reply_text(
                         "🎯 **Processing your stats data...**\n\n"
                         "Thanks for replying with your statistics! ⚡",
@@ -77,7 +77,7 @@ class MessageHandlers:
                     return
                 else:
                     # Reply to bot but not valid stats data
-                    reply_markup = self._create_navigation_buttons()
+                    reply_markup = self._create_navigation_buttons(context_type="data_help")
                     await update.message.reply_text(
                         "🤔 **I don't recognize this as Ingress statistics**\n\n"
                         "💡 **To submit your stats:**\n"
@@ -96,7 +96,7 @@ class MessageHandlers:
         
         if detection_result['type'] == 'ingress_data':
             # Valid stats data - process it directly (RESTORED FUNCTIONALITY)
-            reply_markup = self._create_navigation_buttons(exclude_current="nav_submit")
+            reply_markup = self._create_navigation_buttons(context_type="data_processing")
             await update.message.reply_text(
                 "🎯 **Processing your stats data...**\n\n"
                 "Thanks for submitting your statistics! ⚡",
@@ -108,7 +108,7 @@ class MessageHandlers:
         
         elif detection_result['type'] == 'partial_data':
             # Looks like incomplete stats data - provide guidance
-            reply_markup = self._create_navigation_buttons()
+            reply_markup = self._create_navigation_buttons(context_type="data_help")
             await update.message.reply_text(
                 "📊 **I can see partial Ingress statistics data!**\n\n"
                 f"⚠️ **Issue detected:** {detection_result.get('issue', 'Incomplete data')}\n\n"
@@ -123,7 +123,7 @@ class MessageHandlers:
         
         elif detection_result['type'] == 'possible_data':
             # Might be data, offer to help
-            reply_markup = self._create_navigation_buttons()
+            reply_markup = self._create_navigation_buttons(context_type="data_help")
             await update.message.reply_text(
                 "🤔 **Are you trying to submit Ingress statistics?**\n\n"
                 "📋 **Proper submission methods:**\n"
@@ -136,7 +136,7 @@ class MessageHandlers:
         
         else:
             # Generic help for unrecognized messages
-            reply_markup = self._create_navigation_buttons()
+            reply_markup = self._create_navigation_buttons(context_type="welcome")
             await update.message.reply_text(
                 "👋 **I'm here to help with Ingress leaderboards!**\n\n"
                 "🔥 **Quick Access:**\n"
@@ -221,19 +221,37 @@ class MessageHandlers:
         await temp_handler._process_submission_data(update, context, data_text)
         return
     
-    def _create_navigation_buttons(self, exclude_current=None):
-        """Create navigation buttons for message handlers"""
+    def _create_navigation_buttons(self, exclude_current=None, context_type="default"):
+        """Create contextual navigation buttons based on the situation"""
         buttons = []
         
-        # Main navigation buttons
-        nav_buttons = [
-            ("🛠 Commands", "nav_commands"),
-            ("📊 Submit", "nav_submit"),
-            ("🏆 Leaderboard", "nav_leaderboard"), 
-            ("📈 Progress", "nav_progress"),
-            ("⚔️ Factions", "nav_factions"),
-            ("❓ Help", "nav_help")
-        ]
+        # Define different button sets for different contexts
+        if context_type == "data_processing":
+            # When processing data - show minimal options
+            nav_buttons = [
+                ("🏆 View Results", "nav_leaderboard"),
+                ("❓ Help", "nav_help")
+            ]
+        elif context_type == "data_help":
+            # When helping with data format - show submission focused options
+            nav_buttons = [
+                ("🔄 Try Submit", "nav_submit"),
+                ("❓ More Help", "nav_help")
+            ]
+        elif context_type == "general_help":
+            # General help messages - show main actions
+            nav_buttons = [
+                ("📊 Submit Stats", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard"),
+                ("❓ Help", "nav_help")
+            ]
+        else:
+            # Default - reduced set of main navigation
+            nav_buttons = [
+                ("📊 Submit", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard"), 
+                ("❓ Help", "nav_help")
+            ]
         
         # Filter out excluded button
         if exclude_current:

@@ -132,7 +132,7 @@ _Select a key element to view the leaderboard:_""",
                 
                 # Generate leaderboard text with custom faction stickers - send new message
                 leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
-                reply_markup = self._create_navigation_buttons()
+                reply_markup = self._create_navigation_buttons(context_type="leaderboard")
                 try:
                     await context.bot.send_message(
                         chat_id=query.message.chat_id,
@@ -171,19 +171,52 @@ _Select a key element to view the leaderboard:_""",
         
         return InlineKeyboardMarkup(keyboard)
     
-    def _create_navigation_buttons(self):
-        """Create navigation buttons for callback handlers"""
+    def _create_navigation_buttons(self, context_type="minimal"):
+        """Create contextual navigation buttons for callback handlers"""
         buttons = []
         
-        # Main navigation buttons
-        nav_buttons = [
-            ("🛠 Commands", "nav_commands"),
-            ("📊 Submit", "nav_submit"),
-            ("🏆 Leaderboard", "nav_leaderboard"), 
-            ("📈 Progress", "nav_progress"),
-            ("⚔️ Factions", "nav_factions"),
-            ("❓ Help", "nav_help")
-        ]
+        # Define context-specific button sets
+        context_buttons = {
+            "welcome": [
+                ("📊 Submit Stats", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard"),
+                ("❓ Help", "nav_help")
+            ],
+            "success": [
+                ("🏆 View Leaderboard", "nav_leaderboard"),
+                ("⚔️ Faction Stats", "nav_factions"),
+                ("📊 Submit More", "nav_submit")
+            ],
+            "error": [
+                ("🔄 Try Again", "nav_submit"),
+                ("❓ Help", "nav_help")
+            ],
+            "leaderboard": [
+                ("⚔️ Faction Comparison", "nav_factions"),
+                ("📈 Progress", "nav_progress"),
+                ("📊 Submit Stats", "nav_submit")
+            ],
+            "help": [
+                ("📊 Submit Stats", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard"),
+                ("🛠 All Commands", "nav_commands")
+            ],
+            "minimal": [
+                ("📊 Submit", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard")
+            ],
+            "data_processing": [
+                ("🏆 View Results", "nav_leaderboard"),
+                ("❓ Help", "nav_help")
+            ],
+            "data_help": [
+                ("📊 Try Submit", "nav_submit"),
+                ("❓ More Help", "nav_help")
+            ]
+        }
+        
+        # Get buttons for the specified context, fallback to minimal
+        nav_buttons = context_buttons.get(context_type, context_buttons["minimal"])
         
         # Create rows of 2-3 buttons each for better mobile display
         row = []
@@ -323,7 +356,7 @@ _Select a key element to view the leaderboard:_""",
 Compare Enlightened vs Resistance performance across all statistics.
 
 **Time Frames:** All Time, Monthly, Weekly""",
-                    reply_markup=self._create_navigation_buttons(),
+                    reply_markup=self._create_navigation_buttons(context_type="leaderboard"),
                     parse_mode='Markdown'
                 )
             
@@ -345,7 +378,7 @@ Compare Enlightened vs Resistance performance across all statistics.
                     await context.bot.send_message(
                         chat_id=query.message.chat_id,
                         text=commands_text,
-                        reply_markup=self._create_navigation_buttons(),
+                        reply_markup=self._create_navigation_buttons(context_type="help"),
                         parse_mode='Markdown'
                     )
                 except Exception as e:
@@ -357,14 +390,14 @@ Compare Enlightened vs Resistance performance across all statistics.
                         await context.bot.send_message(
                             chat_id=query.message.chat_id,
                             text=fallback_text,
-                            reply_markup=self._create_navigation_buttons()
+                            reply_markup=self._create_navigation_buttons(context_type="help")
                         )
                     except Exception as fallback_error:
                         logger.error(f"Error sending commands list fallback: {fallback_error}")
                         await context.bot.send_message(
                             chat_id=query.message.chat_id,
                             text="❌ Error displaying commands list. Please try again.",
-                            reply_markup=self._create_navigation_buttons()
+                            reply_markup=self._create_navigation_buttons(context_type="error")
                         )
             
             elif data == 'nav_help':
@@ -383,7 +416,7 @@ Current AP: 12,345,678
 ```
 
 **Supported:** All Ingress statistics are supported!""",
-                    reply_markup=self._create_navigation_buttons(),
+                    reply_markup=self._create_navigation_buttons(context_type="help"),
                     parse_mode='Markdown'
                 )
             
@@ -399,7 +432,7 @@ All Ingress statistics are supported including:
 • And many more!
 
 **Time Frames:** All Time, Monthly (30 days), Weekly (7 days)""",
-                    reply_markup=self._create_navigation_buttons(),
+                    reply_markup=self._create_navigation_buttons(context_type="help"),
                     parse_mode='Markdown'
                 )
             
