@@ -53,10 +53,11 @@ def main():
     print("🔍 **Comprehensive Navigation Button Verification**\n")
     
     # Files to check
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     handler_files = [
-        "/home/codesagepath/Documents/TGBot/ingress-leaderboard/src/handlers/command_handlers.py",
-        "/home/codesagepath/Documents/TGBot/ingress-leaderboard/src/handlers/message_handlers.py", 
-        "/home/codesagepath/Documents/TGBot/ingress-leaderboard/src/handlers/callback_handlers.py"
+        os.path.join(script_dir, "src", "handlers", "command_handlers.py"),
+        os.path.join(script_dir, "src", "handlers", "message_handlers.py"),
+        os.path.join(script_dir, "src", "handlers", "callback_handlers.py")
     ]
     
     total_calls = 0
