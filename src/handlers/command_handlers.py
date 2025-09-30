@@ -6,7 +6,7 @@ import logging
 import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
-from config.settings import LEADERBOARD_STATS, TIME_SLOTS, KEY_ELEMENTS
+from config.settings import LEADERBOARD_STATS, TIME_SLOTS, KEY_ELEMENTS, BOT_COMMANDS
 from ..services import LeaderboardManager
 from ..parsers import DataParser
 
@@ -35,6 +35,21 @@ Ready to see where you rank? 🏆"""
         
         reply_markup = self._create_navigation_buttons()
         await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode='Markdown')
+        return
+    
+    async def commands_command(self, update: Update, context: CallbackContext):
+        """Handle /commands command - show all available bot commands"""
+        command_lines = [
+            f"/{cmd['command']} - {cmd['description']}"
+            for cmd in BOT_COMMANDS
+        ]
+
+        commands_text = """🛠 **Bot Commands Overview**
+
+""" + "\n".join(command_lines)
+
+        reply_markup = self._create_navigation_buttons(exclude_current="nav_commands")
+        await update.message.reply_text(commands_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
     
     async def help_command(self, update: Update, context: CallbackContext):
@@ -68,8 +83,6 @@ Ready to see where you rank? 🏆"""
         submit_text = f"""📊 **Ready to submit your stats!**
 
 {self.parser.get_quick_help()}
-
-**Next:** Paste your copied statistics data here.
 
 ❌ Send `/cancel` to cancel."""
         
@@ -622,6 +635,7 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
         
         # Main navigation buttons
         nav_buttons = [
+            ("🛠 Commands", "nav_commands"),
             ("📊 Submit", "nav_submit"),
             ("🏆 Leaderboard", "nav_leaderboard"), 
             ("📈 Progress", "nav_progress"),

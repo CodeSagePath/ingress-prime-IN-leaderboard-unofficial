@@ -193,6 +193,7 @@ class MessageHandlers:
         
         # Main navigation buttons
         nav_buttons = [
+            ("🛠 Commands", "nav_commands"),
             ("📊 Submit", "nav_submit"),
             ("🏆 Leaderboard", "nav_leaderboard"), 
             ("📈 Progress", "nav_progress"),
