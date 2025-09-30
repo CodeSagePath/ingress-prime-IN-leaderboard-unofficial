@@ -160,7 +160,7 @@ def check_dependencies():
     logger.info("🔍 Checking dependencies...")
     
     required_packages = [
-        'telebot',
+        'telegram',  # python-telegram-bot imports as 'telegram'
         'python-dotenv',
         'requests',
         'sqlite3',  # Usually built-in
@@ -172,8 +172,8 @@ def check_dependencies():
         try:
             if package == 'sqlite3':
                 import sqlite3
-            elif package == 'telebot':
-                import telebot
+            elif package == 'telegram':
+                import telegram
             elif package == 'python-dotenv':
                 import dotenv
             elif package == 'requests':
@@ -187,7 +187,11 @@ def check_dependencies():
     if missing_packages:
         logger.error("❌ Missing dependencies:")
         for package in missing_packages:
-            logger.error(f"   - {package}")
+            # Show the actual pip package name
+            if package == 'telegram':
+                logger.error(f"   - python-telegram-bot (imports as '{package}')")
+            else:
+                logger.error(f"   - {package}")
         logger.error("   Please install with: pip install -r requirements.txt")
         return False
     
