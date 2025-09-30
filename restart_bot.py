@@ -14,7 +14,7 @@ def restart_bot():
     print("=" * 50)
     
     # Change to project directory
-    project_dir = "/home/codesagepath/Documents/TGBot/ingress-leaderboard"
+    project_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(project_dir)
     
     print("📁 Working directory:", os.getcwd())
