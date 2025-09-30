@@ -28,7 +28,23 @@ class IngressLeaderboardBot:
     def run(self):
         """Run the bot"""
         if not BOT_TOKEN or BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
-            logger.error("Please set your bot token in config/settings.py or environment variable BOT_TOKEN")
+            error_msg = """
+❌ Bot token not configured!
+
+Possible solutions:
+1. Check if .env file exists in the project root directory
+2. Ensure .env file contains: BOT_TOKEN=your_actual_token_here
+3. Verify the .env file has proper permissions (readable)
+
+Current BOT_TOKEN value: {'Not set' if not BOT_TOKEN else BOT_TOKEN[:10] + '...' if len(BOT_TOKEN) > 10 else 'Invalid format'}
+
+For Termux users:
+- Make sure you're running the bot from the correct directory
+- Try copying .env file to your home directory: ~/ingress-bot/.env
+- Check file permissions: chmod 644 .env
+"""
+            logger.error(error_msg)
+            print(error_msg)
             return
         
         # Create application

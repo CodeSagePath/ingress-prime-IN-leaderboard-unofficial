@@ -9,11 +9,49 @@ from dotenv import load_dotenv
 # Project root directory
 PROJECT_ROOT = Path(__file__).parent.parent
 
-# Load environment variables from .env file
-load_dotenv(PROJECT_ROOT / ".env")
+# Robust .env file loading with multiple fallback locations
+def load_env_file():
+    """Load .env file with fallback locations for different environments"""
+    env_locations = [
+        PROJECT_ROOT / ".env",  # Standard location
+        Path.cwd() / ".env",    # Current working directory
+        Path(os.path.expanduser("~")) / "ingress-bot" / ".env",  # Home directory
+    ]
+    
+    # Add Termux-specific locations
+    if os.environ.get('PREFIX', '').endswith('com.termux'):
+        termux_locations = [
+            Path("/data/data/com.termux/files/home/ingress-bot/.env"),
+            Path(os.path.expanduser("~")) / ".env",
+        ]
+        env_locations.extend(termux_locations)
+    
+    for env_path in env_locations:
+        try:
+            if env_path.exists():
+                result = load_dotenv(env_path, override=True)
+                if result:
+                    # Verify that BOT_TOKEN was actually loaded
+                    test_token = os.getenv("BOT_TOKEN")
+                    if test_token and test_token.strip() and test_token != "YOUR_BOT_TOKEN_HERE":
+                        print(f"✅ Loaded .env from: {env_path}")
+                        return True
+        except Exception as e:
+            print(f"Warning: Could not load {env_path}: {e}")
+            continue
+    
+    print("⚠️ Warning: Could not find or load .env file")
+    return False
 
-# Bot configuration
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # Use environment variable or default
+# Load environment variables
+load_env_file()
+
+# Bot configuration with additional validation
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN or BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
+    # Try to load .env again as a fallback
+    load_dotenv(PROJECT_ROOT / ".env", override=True)
+    BOT_TOKEN = os.getenv("BOT_TOKEN")
 BOT_USERNAME = "ingressIN_leaderboard_bot"  # Bot username for mention detection
 
 # Central command metadata
