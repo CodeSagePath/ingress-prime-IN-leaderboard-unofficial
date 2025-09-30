@@ -5,7 +5,7 @@ Final verification that direct paste functionality is working
 
 import sys
 import os
-sys.path.append('/home/codesagepath/Documents/TGBot/ingress-leaderboard/src')
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src'))
 
 from handlers.message_handlers import MessageHandlers
 
