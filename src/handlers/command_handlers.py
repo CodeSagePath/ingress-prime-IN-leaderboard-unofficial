@@ -28,7 +28,7 @@ class CommandHandlers:
 
 🚀 **Quick Start:**
 1. Copy stats from Ingress _(Agent → Statistics)_
-2. Tap "📊 Submit" below and paste
+2. Tap "📊 Submit Stats" below and paste
 3. View rankings with "🏆 Leaderboard"
 
 Ready to see where you rank? 🏆"""
@@ -659,13 +659,13 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
         elif context_type == "minimal":
             # Minimal context - just essential actions
             nav_buttons = [
-                ("📊 Submit", "nav_submit"),
+                ("📊 Submit Stats", "nav_submit"),
                 ("🏆 Leaderboard", "nav_leaderboard")
             ]
         else:
             # Default - reduced set of main navigation
             nav_buttons = [
-                ("📊 Submit", "nav_submit"),
+                ("📊 Submit Stats", "nav_submit"),
                 ("🏆 Leaderboard", "nav_leaderboard"), 
                 ("⚔️ Factions", "nav_factions"),
                 ("❓ Help", "nav_help")

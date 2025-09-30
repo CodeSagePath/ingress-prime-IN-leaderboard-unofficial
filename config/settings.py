@@ -14,7 +14,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 # Bot configuration
 BOT_TOKEN = os.getenv("BOT_TOKEN")  # Use environment variable or default
-BOT_USERNAME = "IngressIN_leaderboard_bot"  # Bot username for mention detection
+BOT_USERNAME = "ingressIN_leaderboard_bot"  # Bot username for mention detection
 
 # Central command metadata
 BOT_COMMANDS = [
@@ -34,7 +34,7 @@ BOT_COMMANDS = [
     },
     {
         "command": "submit",
-        "label": "📊 Submit",
+        "label": "📊 Submit Stats",
         "description": "Submit Ingress statistics",
         "callback": "nav_submit",
         "show_in_menu": True
@@ -264,6 +264,19 @@ KEY_ELEMENTS = {
         "stat_name": "Distance Walked",
         "description": "Distance Walk"
     }
+}
+
+# Prefix Detection Configuration
+PREFIX_DETECTION_MODE = os.getenv("PREFIX_DETECTION_MODE", "flexible").lower()  # "strict" or "flexible"
+REQUIRED_PREFIX_PATTERN = "Time Span Agent Name"  # The required prefix pattern for strict mode
+
+# Prefix Detection Settings
+PREFIX_SETTINGS = {
+    "strict_mode": PREFIX_DETECTION_MODE == "strict",
+    "required_pattern": REQUIRED_PREFIX_PATTERN,
+    "case_sensitive": False,  # Whether pattern matching is case-sensitive
+    "pattern_anywhere": True,  # Whether pattern can be anywhere in message (True) or must be at start (False)
+    "ignore_without_prefix": PREFIX_DETECTION_MODE == "strict",  # In strict mode, ignore messages without prefix
 }
 
 # Data format mapping (field positions in the input data)

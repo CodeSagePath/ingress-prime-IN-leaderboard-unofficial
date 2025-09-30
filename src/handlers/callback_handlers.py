@@ -55,7 +55,7 @@ class CallbackHandlers:
                 # Create back button with navigation
                 keyboard = [
                     [InlineKeyboardButton("🔙 Back to Selection", callback_data="back_to_selection")],
-                    [InlineKeyboardButton("📊 Submit", callback_data="nav_submit"),
+                    [InlineKeyboardButton("📊 Submit Stats", callback_data="nav_submit"),
                      InlineKeyboardButton("📈 Progress", callback_data="nav_progress"),
                      InlineKeyboardButton("⚔️ Factions", callback_data="nav_factions")]
                 ]
@@ -202,7 +202,7 @@ _Select a key element to view the leaderboard:_""",
                 ("🛠 All Commands", "nav_commands")
             ],
             "minimal": [
-                ("📊 Submit", "nav_submit"),
+                ("📊 Submit Stats", "nav_submit"),
                 ("🏆 Leaderboard", "nav_leaderboard")
             ],
             "data_processing": [
