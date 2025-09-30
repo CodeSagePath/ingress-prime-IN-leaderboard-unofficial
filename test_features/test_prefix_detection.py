@@ -30,19 +30,19 @@ def test_prefix_detection():
     test_cases = [
         {
             "name": "Valid Ingress Header with Data",
-            "text": "Time Span Agent Name Agent Faction Date (yyyy-mm-dd) Time (hh:mm:ss) Level Lifetime AP Current AP ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000 25000000 1500 200 5000 800 75000000 1200 500 300 15000 2500 3500 8500000 1200 800 5000 12000 3500 2800 45000 150 1800 2500 1200 800 500 300 200 100 50 25 15 10 5 3 2 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+            "text": "Time Span Agent Name Agent Faction Date (yyyy-mm-dd) Time (hh:mm:ss) Level Lifetime AP Current AP ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 1500 200 5000 800 75000000 1200 500 300 15000 2500 3500 8500000 1200 800 5000 12000 3500 2800 45000 150 1800 2500 1200 800 500 300 200 100 50 25 15 10 5 3 2 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
         },
         {
             "name": "Data with prefix at start",
-            "text": "Time Span Agent Name here is my data: ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000 25000000"
+            "text": "Time Span Agent Name here is my data: ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000"
         },
         {
             "name": "Data with prefix in middle",
-            "text": "Here is my stats: Time Span Agent Name Agent Faction Date ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16"
+            "text": "Here is my stats: Time Span Agent Name Agent Faction Date ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16"
         },
         {
             "name": "Data without required prefix",
-            "text": "ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000 25000000 1500 200 5000"
+            "text": "ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 1500 200 5000"
         },
         {
             "name": "Just the prefix without data",
@@ -54,7 +54,7 @@ def test_prefix_detection():
         },
         {
             "name": "Case insensitive test",
-            "text": "time span agent name here is my data: ALL TIME TestAgent Enlightened 2024-01-15 12:30:45"
+            "text": "time span agent name here is my data: ALL TIME TestAgent Enlightened 2025-01-15 12:30:45"
         }
     ]
     
@@ -87,7 +87,7 @@ def test_mode_switching():
     print("=" * 60)
     
     # Test data without prefix
-    test_text = "ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000"
+    test_text = "ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000"
     
     # Test in flexible mode (should process)
     os.environ['PREFIX_DETECTION_MODE'] = 'flexible'

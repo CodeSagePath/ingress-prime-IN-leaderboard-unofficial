@@ -26,7 +26,7 @@ def test_strict_mode_behavior():
     test_messages = [
         "Hello world",  # Should be ignored in strict mode
         "How are you?",  # Should be ignored in strict mode
-        "Time Span Agent Name TestAgent Enlightened 2024-01-01 12:00:00 Level 16",  # Should be processed
+        "Time Span Agent Name TestAgent Enlightened 2025-01-01 12:00:00 Level 16",  # Should be processed
         "@IngressIN_leaderboard_bot hello",  # Should be processed (mention)
         "STATS: some data here",  # Should be ignored (no required prefix)
         "Time Span Agent Name",  # Should be processed but might fail validation

@@ -47,34 +47,34 @@ PREFIX_DETECTION_MODE=strict
 
 1. **Complete Ingress Header**:
 ```
-Time Span Agent Name Agent Faction Date (yyyy-mm-dd) Time (hh:mm:ss) Level Lifetime AP Current AP ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000 25000000 1500...
+Time Span Agent Name Agent Faction Date (yyyy-mm-dd) Time (hh:mm:ss) Level Lifetime AP Current AP ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 1500...
 ```
 
 2. **Prefix at Start**:
 ```
-Time Span Agent Name here is my data: ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000...
+Time Span Agent Name here is my data: ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000...
 ```
 
 3. **Prefix in Middle**:
 ```
-Here are my stats: Time Span Agent Name Agent Faction Date ALL TIME TestAgent Enlightened 2024-01-15...
+Here are my stats: Time Span Agent Name Agent Faction Date ALL TIME TestAgent Enlightened 2025-01-15...
 ```
 
 4. **Case Insensitive**:
 ```
-time span agent name ALL TIME TestAgent Enlightened 2024-01-15 12:30:45...
+time span agent name ALL TIME TestAgent Enlightened 2025-01-15 12:30:45...
 ```
 
 ### ❌ Messages Without Prefix
 
 **Flexible Mode**: Still processed, but with lower priority
 ```
-ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000...
+ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000...
 ```
 
 **Strict Mode**: Ignored completely (bot provides guidance message)
 ```
-ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000...
+ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000...
 ```
 
 ## Bot Responses

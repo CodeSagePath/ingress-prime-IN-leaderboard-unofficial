@@ -272,7 +272,7 @@ class MessageHandlers:
             response_text += "2. Add your complete Ingress statistics after it\n"
             response_text += "3. Copy from: Ingress → Agent → Statistics\n\n"
             response_text += "**Example format:**\n"
-            response_text += f"`{prefix_info.get('prefix_text', 'STATS:')} ALL TIME YourName Enlightened 2024-01-01 12:00:00 [your stats...]`"
+            response_text += f"`{prefix_info.get('prefix_text', 'STATS:')} ALL TIME YourName Enlightened 2025-01-01 12:00:00 [your stats...]`"
             
             await update.message.reply_text(
                 response_text,

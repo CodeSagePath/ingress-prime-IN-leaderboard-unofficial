@@ -95,7 +95,7 @@ def test_fixed_logic():
         },
         {
             "name": "Reply to bot message with prefix",
-            "message": MockMessage("Time Span Agent Name ALL TIME TestAgent Enlightened 2024-01-01 12:00:00 16 123456", reply_to_message=bot_message),
+            "message": MockMessage("Time Span Agent Name ALL TIME TestAgent Enlightened 2025-01-01 12:00:00 16 123456", reply_to_message=bot_message),
             "context": MockContext(),
             "expected": True
         },
@@ -107,7 +107,7 @@ def test_fixed_logic():
         },
         {
             "name": "Message with prefix (not reply)",
-            "message": MockMessage("Time Span Agent Name ALL TIME TestAgent Enlightened 2024-01-01 12:00:00 16 123456"),
+            "message": MockMessage("Time Span Agent Name ALL TIME TestAgent Enlightened 2025-01-01 12:00:00 16 123456"),
             "context": MockContext(),
             "expected": True
         }

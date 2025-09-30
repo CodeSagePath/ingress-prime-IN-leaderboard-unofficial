@@ -23,19 +23,19 @@ def demo_prefix_detection():
     test_cases = [
         {
             "name": "✅ Perfect Ingress Header",
-            "text": "Time Span Agent Name Agent Faction Date (yyyy-mm-dd) Time (hh:mm:ss) Level Lifetime AP Current AP ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000 25000000"
+            "text": "Time Span Agent Name Agent Faction Date (yyyy-mm-dd) Time (hh:mm:ss) Level Lifetime AP Current AP ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000"
         },
         {
             "name": "✅ Header with Custom Message",
-            "text": "Time Span Agent Name Here are my latest stats: ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000 25000000"
+            "text": "Time Span Agent Name Here are my latest stats: ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000"
         },
         {
             "name": "✅ Case Insensitive",
-            "text": "time span agent name ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000 25000000"
+            "text": "time span agent name ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000"
         },
         {
             "name": "❌ Missing Header",
-            "text": "ALL TIME TestAgent Enlightened 2024-01-15 12:30:45 16 50000000 25000000"
+            "text": "ALL TIME TestAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000"
         },
         {
             "name": "❌ Random Message",
