@@ -16,6 +16,91 @@ load_dotenv(PROJECT_ROOT / ".env")
 BOT_TOKEN = os.getenv("BOT_TOKEN")  # Use environment variable or default
 BOT_USERNAME = "IngressIN_leaderboard_bot"  # Bot username for mention detection
 
+# Central command metadata
+BOT_COMMANDS = [
+    {
+        "command": "start",
+        "label": "🚀 Start",
+        "description": "Welcome message & quick start guide",
+        "callback": "nav_main_menu",
+        "show_in_menu": False
+    },
+    {
+        "command": "commands",
+        "label": "🛠 Commands",
+        "description": "Show every available bot command",
+        "callback": "nav_commands",
+        "show_in_menu": True
+    },
+    {
+        "command": "submit",
+        "label": "📊 Submit",
+        "description": "Submit Ingress statistics",
+        "callback": "nav_submit",
+        "show_in_menu": True
+    },
+    {
+        "command": "leaderboard",
+        "label": "🏆 Leaderboard",
+        "description": "View key element leaderboards",
+        "callback": "nav_leaderboard",
+        "show_in_menu": True
+    },
+    {
+        "command": "progress",
+        "label": "📈 Progress",
+        "description": "Track agent progress",
+        "callback": "nav_progress",
+        "show_in_menu": True
+    },
+    {
+        "command": "factions",
+        "label": "⚔️ Factions",
+        "description": "Compare factions by time frame",
+        "callback": "nav_factions",
+        "show_in_menu": True
+    },
+    {
+        "command": "stats",
+        "label": "📋 Stats",
+        "description": "List supported statistics",
+        "callback": "nav_stats",
+        "show_in_menu": True
+    },
+    {
+        "command": "help",
+        "label": "❓ Help",
+        "description": "Quick help & tips",
+        "callback": "nav_help",
+        "show_in_menu": True
+    },
+    {
+        "command": "help_detailed",
+        "label": "📚 Help (Detailed)",
+        "description": "Comprehensive help guide",
+        "callback": "nav_help_detailed",
+        "show_in_menu": False
+    },
+    {
+        "command": "cancel",
+        "label": "❌ Cancel",
+        "description": "Cancel current operation",
+        "show_in_menu": False
+    },
+    {
+        "command": "create_stickers",
+        "label": "🎨 Stickers",
+        "description": "Create faction sticker set",
+        "show_in_menu": False
+    },
+    {
+        "command": "prepare_emoji",
+        "label": "🧪 Prepare Emoji",
+        "description": "Prepare faction emoji assets",
+        "show_in_menu": False
+    }
+]
+
 # Database configuration
 DATABASE_PATH = PROJECT_ROOT / "data" / "ingress_leaderboard.db"
 
