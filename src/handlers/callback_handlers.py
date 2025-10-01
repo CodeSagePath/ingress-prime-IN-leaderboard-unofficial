@@ -14,7 +14,7 @@ class CallbackHandlers:
         self.db = db_manager
         self.leaderboard = leaderboard_manager
         self.parser = data_parser
-        self.user_selections = {}  # Store user selections temporarily
+        # Note: Using context.user_data instead of instance variable for concurrent safety
     
     async def handle_callback_query(self, update: Update, context: CallbackContext):
         """Handle inline keyboard callbacks"""
@@ -24,9 +24,9 @@ class CallbackHandlers:
         data = query.data
         user_id = query.from_user.id
         
-        # Initialize user selection if not exists
-        if user_id not in self.user_selections:
-            self.user_selections[user_id] = {'time_slot': 'all_time', 'faction': None}
+        # Initialize user selections in context.user_data for concurrent safety
+        if 'selections' not in context.user_data:
+            context.user_data['selections'] = {'time_slot': 'all_time', 'faction': None}
         
         # Disable the previous menu first
         await self._disable_previous_menu(query)
@@ -43,9 +43,9 @@ class CallbackHandlers:
                     break
             
             if selected_element:
-                # Get user's current time selection
-                time_slot = self.user_selections[user_id].get('time_slot', 'all_time')
-                faction = self.user_selections[user_id].get('faction', None)
+                # Get user's current time selection from context-specific data
+                time_slot = context.user_data['selections'].get('time_slot', 'all_time')
+                faction = context.user_data['selections'].get('faction', None)
                 
                 # Generate leaderboard text and image with faction icons
                 leaderboard_text = self.leaderboard.generate_leaderboard(
@@ -87,9 +87,9 @@ class CallbackHandlers:
                 )
         
         elif data.startswith('time_'):
-            # Time slot selection
+            # Time slot selection - store in context for concurrent safety
             time_slot = data.replace('time_', '')
-            self.user_selections[user_id]['time_slot'] = time_slot
+            context.user_data['selections']['time_slot'] = time_slot
             
             # Send new message to show time selection feedback
             time_display = time_slot.replace('_', ' ').title()

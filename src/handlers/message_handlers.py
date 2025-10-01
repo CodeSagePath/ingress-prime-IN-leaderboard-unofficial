@@ -516,13 +516,138 @@ class MessageHandlers:
         if ingress_prefix_info.get('pattern_found'):
             logger.info(f"Processing data with 'Time Span Agent Name' prefix detected at {ingress_prefix_info.get('pattern_location', 'unknown location')}")
         
-        # Import here to avoid circular imports
-        from .command_handlers import CommandHandlers
-        
-        # Create a temporary command handler instance to use the shared processing method
-        temp_handler = CommandHandlers(self.db, self.leaderboard, self.parser)
-        await temp_handler._process_submission_data(update, context, data_text)
+        # Process submission directly instead of creating temporary handler instances
+        await self._process_submission_data_internal(update, context, data_text)
         return
+    
+    async def _process_submission_data_internal(self, update: Update, context: CallbackContext, data_text: str):
+        """Internal method to process submitted Ingress data efficiently for concurrent users"""
+        user_id = update.effective_user.id
+        
+        try:
+            # Parse the data using the improved multiline parser
+            parsed_data_list, parse_errors = self.parser.parse_multiline_data(data_text)
+            
+            # If there are parse errors, show them to the user
+            if parse_errors and not parsed_data_list:
+                # Show the first (most relevant) error with helpful guidance
+                error_message = parse_errors[0].user_message
+                if len(parse_errors) > 1:
+                    error_message += f"\n\n📝 **Found {len(parse_errors)} issues total.** Fix this one first."
+                
+                error_message += f"\n\n{self.parser.get_quick_help()}"
+                
+                reply_markup = self._create_navigation_buttons(context_type="error")
+                await update.message.reply_text(error_message, reply_markup=reply_markup, parse_mode='Markdown')
+                return
+            
+            # If some lines had errors but we got some valid data, show warnings
+            if parse_errors and parsed_data_list:
+                warning_msg = f"⚠️ **Processed {len(parsed_data_list)} submissions, but found issues:**\n\n"
+                for error in parse_errors[:2]:  # Show first 2 errors
+                    warning_msg += f"• {error.user_message}\n"
+                if len(parse_errors) > 2:
+                    warning_msg += f"• _...and {len(parse_errors)-2} more issues_\n"
+                
+                reply_markup = self._create_navigation_buttons(context_type="error")
+                await update.message.reply_text(warning_msg, reply_markup=reply_markup, parse_mode='Markdown')
+            
+            if not parsed_data_list:
+                reply_markup = self._create_navigation_buttons(context_type="error")
+                await update.message.reply_text(
+                    "❌ **No valid data processed**\n\n" + 
+                    self.parser.get_quick_help(),
+                    reply_markup=reply_markup,
+                    parse_mode='Markdown'
+                )
+                return
+            
+            # Process each valid parsed data entry
+            success_count = 0
+            for parsed_data in parsed_data_list:
+                try:
+                    # Add agent to database (concurrent-safe)
+                    agent_id = self.db.add_agent(
+                        parsed_data['agent_name'],
+                        parsed_data['faction'],
+                        user_id
+                    )
+
+                    # Add submission (concurrent-safe)
+                    success = self.db.add_submission(agent_id, parsed_data)
+
+                    if success:
+                        success_count += 1
+                        faction_emoji = "💚" if parsed_data['faction'].lower() == 'enlightened' else "💙"
+                        success_text = f"""🎉 **Stats submitted!**
+
+{faction_emoji} **{parsed_data['agent_name']}** _({parsed_data['faction']})_
+📅 {parsed_data['data_date']} at {parsed_data['data_time']}
+📊 Level **{parsed_data['level']}** • ⚡ **{self.parser.format_number(parsed_data['current_ap'])}** AP
+
+__Great work, Agent!__ 💪"""
+                        
+                        reply_markup = self._create_navigation_buttons(context_type="success")
+                        await update.message.reply_text(success_text, reply_markup=reply_markup, parse_mode='Markdown')
+                    else:
+                        keyboard = [
+                            [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
+                             InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+                        ]
+                        reply_markup = InlineKeyboardMarkup(keyboard)
+                        await update.message.reply_text(
+                            f"❌ **Failed to save data for {parsed_data['agent_name']}**\n\n"
+                            "_Temporary issue. Data was parsed correctly._",
+                            reply_markup=reply_markup,
+                            parse_mode='Markdown'
+                        )
+                
+                except Exception as db_error:
+                    logger.error(f"Database error for agent {parsed_data.get('agent_name', 'Unknown')}: {db_error}")
+                    keyboard = [
+                        [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
+                         InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    await update.message.reply_text(
+                        f"❌ **Database error for {parsed_data.get('agent_name', 'your agent')}**\n\n"
+                        "_Could be temporary issue or duplicate data._",
+                        reply_markup=reply_markup,
+                        parse_mode='Markdown'
+                    )
+
+            # Show summary if multiple submissions were processed
+            if len(parsed_data_list) > 1:
+                total_processed = len(parsed_data_list)
+                summary_msg = f"📊 **Submission Summary**\n\n"
+                summary_msg += f"✅ Successfully processed: **{success_count}** out of **{total_processed}** submissions"
+                
+                if success_count == total_processed:
+                    summary_msg += "\n\n🎉 _All your data has been added to the leaderboards!_"
+                elif success_count > 0:
+                    summary_msg += f"\n\n⚠️ **{total_processed - success_count}** submissions had issues _(see messages above)_"
+                else:
+                    summary_msg += "\n\n❌ _None of the submissions could be processed successfully_"
+                
+                reply_markup = self._create_navigation_buttons(context_type="success")
+                await update.message.reply_text(summary_msg, reply_markup=reply_markup, parse_mode='Markdown')
+
+            # Clear user state if it was set (user-specific, concurrent-safe)
+            context.user_data.pop('state', None)
+                
+        except Exception as e:
+            logger.error(f"Unexpected error processing data submission for user {user_id}: {e}")
+            keyboard = [
+                [InlineKeyboardButton("🔄 Try Again", callback_data="nav_submit"),
+                 InlineKeyboardButton("❓ Help", callback_data="nav_help")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.message.reply_text(
+                "❌ **Unexpected error occurred**\n\n"
+                "_Something went wrong. Check data format or try again._",
+                reply_markup=reply_markup,
+                parse_mode='Markdown'
+            )
     
     def _create_navigation_buttons(self, exclude_current=None, context_type="default"):
         """Create contextual navigation buttons based on the situation"""

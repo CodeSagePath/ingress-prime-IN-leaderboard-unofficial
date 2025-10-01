@@ -110,12 +110,14 @@ class DatabaseManager:
             raise
     
     def add_agent(self, agent_name: str, faction: str, telegram_user_id: int) -> int:
-        """Add a new agent or get existing agent ID"""
+        """Add a new agent or get existing agent ID - concurrent safe"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with sqlite3.connect(self.db_path, timeout=30.0) as conn:
+                # Enable WAL mode for better concurrency
+                conn.execute("PRAGMA journal_mode = WAL")
                 cursor = conn.cursor()
                 
-                # Try to get existing agent
+                # Try to get existing agent first
                 cursor.execute('''
                     SELECT id FROM agents 
                     WHERE agent_name = ? AND telegram_user_id = ?
@@ -125,22 +127,36 @@ class DatabaseManager:
                 if result:
                     return result[0]
                 
-                # Insert new agent
+                # Use INSERT OR IGNORE to handle concurrent inserts
                 cursor.execute('''
-                    INSERT INTO agents (agent_name, faction, telegram_user_id)
+                    INSERT OR IGNORE INTO agents (agent_name, faction, telegram_user_id)
                     VALUES (?, ?, ?)
                 ''', (agent_name, faction, telegram_user_id))
                 
-                return cursor.lastrowid
+                # If we inserted a new row, return its ID
+                if cursor.lastrowid:
+                    return cursor.lastrowid
+                
+                # If INSERT OR IGNORE didn't insert (concurrent insert happened), 
+                # try to get the existing ID again
+                cursor.execute('''
+                    SELECT id FROM agents 
+                    WHERE agent_name = ? AND telegram_user_id = ?
+                ''', (agent_name, telegram_user_id))
+                
+                result = cursor.fetchone()
+                return result[0] if result else None
                 
         except sqlite3.Error as e:
-            logging.error(f"Error adding agent: {e}")
+            logging.error(f"Error adding agent {agent_name} for user {telegram_user_id}: {e}")
             raise
     
     def add_submission(self, agent_id: int, data: Dict) -> bool:
-        """Add a new data submission"""
+        """Add a new data submission - concurrent safe"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with sqlite3.connect(self.db_path, timeout=30.0) as conn:
+                # Enable WAL mode for better concurrency
+                conn.execute("PRAGMA journal_mode = WAL")
                 cursor = conn.cursor()
                 
                 # Parse the data according to the format
@@ -216,9 +232,11 @@ class DatabaseManager:
     
     def get_leaderboard(self, stat: str, faction: Optional[str] = None, 
                        days: Optional[int] = None, limit: int = 10) -> List[Tuple]:
-        """Get leaderboard for a specific statistic"""
+        """Get leaderboard for a specific statistic - concurrent safe"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
+            with sqlite3.connect(self.db_path, timeout=30.0) as conn:
+                # Enable WAL mode for better concurrency
+                conn.execute("PRAGMA journal_mode = WAL")
                 cursor = conn.cursor()
                 
                 # Build the query
