@@ -4,9 +4,11 @@ Enhanced with smart prefix detection for flexible stats parsing
 """
 
 import logging
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
-from config.settings import BOT_USERNAME
+from telegram.error import BadRequest
+from config.settings import BOT_USERNAME, AUTO_DELETE_USER_STATS, AUTO_DELETE_DELAY_SECONDS
 from ..services.prefix_detector import PrefixDetector
 from ..services.ingress_prefix_detector import IngressPrefixDetector
 
@@ -19,6 +21,35 @@ class MessageHandlers:
         self.parser = data_parser
         self.prefix_detector = PrefixDetector(db_manager)
         self.ingress_prefix_detector = IngressPrefixDetector()
+    
+    async def _auto_delete_user_message(self, update: Update):
+        """
+        Auto-delete user's stats message to keep chat clean and prevent stat copying.
+        Requires bot to have admin privileges with 'delete messages' permission.
+        """
+        if not AUTO_DELETE_USER_STATS:
+            return
+        
+        try:
+            # Wait a bit before deleting (allows user to see their message was received)
+            if AUTO_DELETE_DELAY_SECONDS > 0:
+                await asyncio.sleep(AUTO_DELETE_DELAY_SECONDS)
+            
+            # Attempt to delete the user's message
+            await update.message.delete()
+            logger.info(f"Successfully deleted stats message from user {update.effective_user.id}")
+            
+        except BadRequest as e:
+            # Bot doesn't have permission to delete messages
+            if "Message can't be deleted" in str(e) or "not enough rights" in str(e):
+                logger.warning(
+                    f"Cannot delete message - bot needs admin privileges with 'delete messages' permission. "
+                    f"Chat: {update.effective_chat.id}, User: {update.effective_user.id}"
+                )
+            else:
+                logger.warning(f"Failed to delete user message: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error while deleting user message: {e}")
     
     def _should_respond_to_message(self, update: Update, context: CallbackContext) -> bool:
         """Check if the bot should respond to this message - SIMPLIFIED AND LESS INTRUSIVE"""
@@ -536,6 +567,11 @@ __Great work, Agent!__ 💪"""
                 
                 reply_markup = self._create_navigation_buttons(context_type="success")
                 await update.message.reply_text(summary_msg, reply_markup=reply_markup, parse_mode='Markdown')
+
+            # Auto-delete user's stats message if enabled and at least one submission was successful
+            if success_count > 0:
+                # Run delete in background to not block the response
+                asyncio.create_task(self._auto_delete_user_message(update))
 
             # Clear user state if it was set (user-specific, concurrent-safe)
             context.user_data.pop('state', None)
