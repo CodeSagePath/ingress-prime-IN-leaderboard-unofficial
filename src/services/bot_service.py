@@ -62,6 +62,7 @@ For Termux users:
         application.add_handler(CommandHandler("stats", self.command_handlers.stats_command))
         application.add_handler(CommandHandler("create_stickers", self.command_handlers.create_stickers_command))
         application.add_handler(CommandHandler("prepare_emoji", self.command_handlers.prepare_emoji_command))
+        application.add_handler(CommandHandler("broadcast", self.command_handlers.broadcast_command))
         application.add_handler(CommandHandler("cancel", self.command_handlers.cancel_command))
         
         # Add message and callback handlers
