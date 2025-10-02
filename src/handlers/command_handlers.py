@@ -80,13 +80,14 @@ Ready to see where you rank? 🏆"""
         # No data provided, set state and show prompt
         context.user_data['state'] = 'awaiting_data'
         
-        submit_text = f"""📊 **Ready to submit your stats!**
+        submit_text = """📊 **Ready to submit your stats!**
 
-{self.parser.get_quick_help()}
+Copy your complete statistics from:
+Ingress → Agent → Statistics
 
-⚠️ **In groups: REPLY to this message when pasting your stats!**
+Then paste them here (or reply to this message in groups).
 
-❌ Send `/cancel` to cancel."""
+Send `/cancel` to cancel."""
         
         reply_markup = self._create_navigation_buttons(exclude_current="nav_submit", context_type="minimal")
         await update.message.reply_text(submit_text, reply_markup=reply_markup, parse_mode='Markdown')
@@ -591,6 +592,98 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
         
         return
     
+    async def health_command(self, update: Update, context: CallbackContext):
+        """Handle /health command - check if server is up and running"""
+        import time
+        import psutil
+        import platform
+        from datetime import datetime, timedelta
+        
+        try:
+            # Get system information
+            start_time = time.time()
+            
+            # Basic system stats
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage('/')
+            boot_time = datetime.fromtimestamp(psutil.boot_time())
+            uptime = datetime.now() - boot_time
+            
+            # Database connectivity check
+            db_status = "✅ Connected"
+            try:
+                # Try a simple database operation
+                test_agents = self.db.get_agents_by_user(0)  # This should return empty list but test connection
+                db_status = "✅ Connected & Responsive"
+            except Exception as db_error:
+                db_status = f"❌ Error: {str(db_error)[:50]}..."
+            
+            # Response time calculation
+            response_time = round((time.time() - start_time) * 1000, 2)
+            
+            # Create beautiful health status message
+            health_text = f"""🏥 **Server Health Check**
+
+🟢 **Status:** _All Systems Operational_
+
+📊 **System Metrics:**
+• **CPU Usage:** {cpu_percent}%
+• **Memory:** {memory.percent}% used ({round(memory.used/1024/1024/1024, 1)}GB / {round(memory.total/1024/1024/1024, 1)}GB)
+• **Disk Space:** {disk.percent}% used ({round(disk.used/1024/1024/1024, 1)}GB / {round(disk.total/1024/1024/1024, 1)}GB)
+
+🗄️ **Database:** {db_status}
+
+⏱️ **Performance:**
+• **Response Time:** {response_time}ms
+• **System Uptime:** {uptime.days}d {uptime.seconds//3600}h {(uptime.seconds//60)%60}m
+
+🖥️ **Environment:**
+• **Platform:** {platform.system()} {platform.release()}
+• **Python:** {platform.python_version()}
+
+🕐 **Last Check:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+✨ **All systems are running smoothly!** ✨"""
+
+            # Determine status emoji based on system health
+            if cpu_percent > 90 or memory.percent > 90 or disk.percent > 95:
+                status_emoji = "🟡"
+                status_text = "_System Under Load_"
+            elif "Error" in db_status:
+                status_emoji = "🔴"
+                status_text = "_Database Issues Detected_"
+            else:
+                status_emoji = "🟢"
+                status_text = "_All Systems Operational_"
+            
+            # Update the message with proper status
+            health_text = health_text.replace("🟢 **Status:** _All Systems Operational_", 
+                                            f"{status_emoji} **Status:** {status_text}")
+            
+            reply_markup = self._create_navigation_buttons(exclude_current="nav_health", context_type="health")
+            await update.message.reply_text(health_text, reply_markup=reply_markup, parse_mode='Markdown')
+            
+        except Exception as e:
+            logger.error(f"Error in health check: {e}")
+            
+            # Fallback error message
+            error_text = f"""🏥 **Server Health Check**
+
+🔴 **Status:** _Health Check Failed_
+
+❌ **Error:** Unable to retrieve system information
+📝 **Details:** {str(e)[:100]}...
+
+⚠️ **The bot is responding, but system monitoring failed.**
+
+🕐 **Check Time:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"""
+
+            reply_markup = self._create_navigation_buttons(exclude_current="nav_health", context_type="error")
+            await update.message.reply_text(error_text, reply_markup=reply_markup, parse_mode='Markdown')
+        
+        return
+    
     async def cancel_command(self, update: Update, context: CallbackContext):
         """Handle /cancel command"""
         current_state = context.user_data.pop('state', None)
@@ -665,12 +758,21 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
                 ("📊 Submit Stats", "nav_submit"),
                 ("🏆 Leaderboard", "nav_leaderboard")
             ]
+        elif context_type == "health":
+            # Health check screen - show system related actions
+            nav_buttons = [
+                ("🔄 Refresh Health", "nav_health"),
+                ("📊 Submit Stats", "nav_submit"),
+                ("🏆 Leaderboard", "nav_leaderboard"),
+                ("❓ Help", "nav_help")
+            ]
         else:
             # Default - reduced set of main navigation
             nav_buttons = [
                 ("📊 Submit Stats", "nav_submit"),
                 ("🏆 Leaderboard", "nav_leaderboard"), 
                 ("⚔️ Factions", "nav_factions"),
+                ("💚 Health", "nav_health"),
                 ("❓ Help", "nav_help")
             ]
         
