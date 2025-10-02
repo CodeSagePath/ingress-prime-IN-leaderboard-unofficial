@@ -20,7 +20,8 @@ class LeaderboardManager:
         self.sticker_manager = StickerManager()
     
     def generate_leaderboard(self, stat: str, time_slot: str = "all_time", 
-                           faction: Optional[str] = None, limit: int = 10) -> str:
+                           faction: Optional[str] = None, limit: int = 10, 
+                           requestor_user_id: Optional[int] = None) -> str:
         """Generate formatted leaderboard text"""
         try:
             days = TIME_SLOTS.get(time_slot)
@@ -28,6 +29,15 @@ class LeaderboardManager:
             
             if not results:
                 return f"No data available for {stat} leaderboard."
+            
+            # Get requestor's agent names if user ID is provided
+            requestor_agents = set()
+            if requestor_user_id:
+                try:
+                    user_agents = self.db.get_agents_by_user(requestor_user_id)
+                    requestor_agents = {agent_name for agent_name, _ in user_agents}
+                except Exception as e:
+                    logging.warning(f"Could not get requestor agents for user {requestor_user_id}: {e}")
             
             # Format header
             time_desc = time_slot.replace('_', ' ').title()
@@ -53,7 +63,13 @@ class LeaderboardManager:
                     else:
                         medal = f"{i}. "
                 
-                leaderboard_text += f"{medal} {faction_emoji} {formatted_value} @{agent_name}\n"
+                # Only tag the requestor's agents, others just show name
+                if agent_name in requestor_agents:
+                    agent_display = f"@{agent_name}"
+                else:
+                    agent_display = agent_name
+                
+                leaderboard_text += f"{medal} {faction_emoji} {formatted_value} {agent_display}\n"
             
             leaderboard_text += f"\n📅 Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
             
