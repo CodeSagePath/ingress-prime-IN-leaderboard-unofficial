@@ -51,7 +51,7 @@ Thumbs.db
 
 # Bot token (security)
 config/local_settings.py
-.env
+# .env
 
 # Additional debugging files
 debug_handler_flow.py
