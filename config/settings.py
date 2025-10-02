@@ -120,6 +120,13 @@ BOT_COMMANDS = [
         "show_in_menu": False
     },
     {
+        "command": "health",
+        "label": "💚 Health Check",
+        "description": "Check if server is up and running",
+        "callback": "nav_health",
+        "show_in_menu": True
+    },
+    {
         "command": "cancel",
         "label": "❌ Cancel",
         "description": "Cancel current operation",
