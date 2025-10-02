@@ -115,7 +115,8 @@ Just copy your stats line and paste it here. The bot will automatically parse an
             faction = None
         
         # Generate leaderboard
-        leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
+        user_id = update.effective_user.id
+        leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction, requestor_user_id=user_id)
         await update.message.reply_text(leaderboard_text, parse_mode='Markdown')
     
     async def progress_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -277,7 +278,8 @@ Use `/leaderboard` to see __current rankings__.
                 time_slot = parts[2]
                 faction = parts[3] if parts[3] != 'all' else None
                 
-                leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
+                user_id = query.from_user.id
+                leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction, requestor_user_id=user_id)
                 await query.edit_message_text(leaderboard_text, parse_mode='Markdown')
     
     def run(self):
