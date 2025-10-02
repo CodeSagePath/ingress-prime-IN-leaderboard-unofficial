@@ -143,6 +143,12 @@ BOT_COMMANDS = [
         "label": "🧪 Prepare Emoji",
         "description": "Prepare faction emoji assets",
         "show_in_menu": False
+    },
+    {
+        "command": "broadcast",
+        "label": "📢 Broadcast",
+        "description": "Send message to all users (admin only)",
+        "show_in_menu": False
     }
 ]
 
