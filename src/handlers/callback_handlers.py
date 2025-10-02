@@ -48,8 +48,9 @@ class CallbackHandlers:
                 faction = context.user_data['selections'].get('faction', None)
                 
                 # Generate leaderboard text and image with faction icons
+                user_id = query.from_user.id
                 leaderboard_text = self.leaderboard.generate_leaderboard(
-                    selected_element['stat_name'], time_slot, faction
+                    selected_element['stat_name'], time_slot, faction, requestor_user_id=user_id
                 )
                 
                 # Create back button with navigation
@@ -131,7 +132,8 @@ _Select a key element to view the leaderboard:_""",
                 faction = parts[3] if parts[3] != 'all' else None
                 
                 # Generate leaderboard text with custom faction stickers - send new message
-                leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
+                user_id = query.from_user.id
+                leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction, requestor_user_id=user_id)
                 reply_markup = self._create_navigation_buttons(context_type="leaderboard")
                 try:
                     await context.bot.send_message(
