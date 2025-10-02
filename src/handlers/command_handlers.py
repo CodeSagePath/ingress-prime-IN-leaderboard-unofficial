@@ -274,7 +274,8 @@ __Great work, Agent!__ 💪"""
         
         # Generate leaderboard as text-based message
         try:
-            leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction)
+            user_id = update.effective_user.id
+            leaderboard_text = self.leaderboard.generate_leaderboard(stat, time_slot, faction, requestor_user_id=user_id)
             reply_markup = self._create_navigation_buttons(context_type="leaderboard")
             await update.message.reply_text(leaderboard_text, reply_markup=reply_markup, parse_mode='Markdown')
         except Exception as e:
