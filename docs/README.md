@@ -35,6 +35,7 @@ ingress-leaderboard/
 - **💾 Local Storage**: SQLite database for data persistence
 - **🔒 Data Validation**: Robust parsing and validation of Ingress data
 - **🎯 Interactive Commands**: Easy-to-use Telegram interface
+- **🧹 Auto-Delete Stats**: Automatically deletes user stats messages to keep chat clean and prevent copying
 
 ## 🚀 Quick Start
 
@@ -145,10 +146,21 @@ The project is set up as an installable Python package. For development, it's re
 ### Environment Variables
 
 - `BOT_TOKEN`: Your Telegram bot token (stored in `.env` file)
+- `PREFIX_DETECTION_MODE`: Set to `strict` or `flexible` for stats parsing behavior
+- `AUTO_DELETE_USER_STATS`: Set to `true` to auto-delete user stats messages (default: `true`)
+- `AUTO_DELETE_DELAY_SECONDS`: Delay before deletion in seconds (default: `2`)
 
 ### Config File
 
 - `config/config.py`: Main configuration
+
+### Auto-Delete Feature
+
+The bot can automatically delete user stats messages after processing to keep the chat clean and prevent stat copying.
+
+**Requirements:** Bot must have admin privileges with "Delete Messages" permission.
+
+See [AUTO_DELETE_FEATURE.md](AUTO_DELETE_FEATURE.md) for detailed setup instructions.
 
 ## 🗄️ Database
 
