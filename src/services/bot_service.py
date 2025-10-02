@@ -54,6 +54,7 @@ For Termux users:
         application.add_handler(CommandHandler("start", self.command_handlers.start_command))
         application.add_handler(CommandHandler("help", self.command_handlers.help_command))
         application.add_handler(CommandHandler("help_detailed", self.command_handlers.help_detailed_command))
+        application.add_handler(CommandHandler("health", self.command_handlers.health_command))
         application.add_handler(CommandHandler("submit", self.command_handlers.submit_command))
         application.add_handler(CommandHandler("leaderboard", self.command_handlers.leaderboard_command))
         application.add_handler(CommandHandler("progress", self.command_handlers.progress_command))
