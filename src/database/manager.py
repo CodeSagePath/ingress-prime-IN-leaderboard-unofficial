@@ -377,3 +377,22 @@ class DatabaseManager:
         except sqlite3.Error as e:
             logging.error(f"Error getting agents for user {telegram_user_id}: {e}")
             return []
+    
+    def get_all_user_ids(self) -> List[int]:
+        """Get all unique telegram user IDs that have interacted with the bot"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    SELECT DISTINCT telegram_user_id
+                    FROM agents
+                    WHERE telegram_user_id IS NOT NULL
+                    ORDER BY telegram_user_id
+                ''')
+                
+                return [row[0] for row in cursor.fetchall()]
+                
+        except sqlite3.Error as e:
+            logging.error(f"Error getting all user IDs: {e}")
+            return []
