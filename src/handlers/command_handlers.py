@@ -697,6 +697,13 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
                 reply_markup=reply_markup,
                 parse_mode='Markdown'
             )
+        elif current_state == 'awaiting_broadcast':
+            await update.message.reply_text(
+                "✅ **Broadcast cancelled**\n\n"
+                "_No messages were sent._",
+                reply_markup=reply_markup,
+                parse_mode='Markdown'
+            )
         elif current_state:
             await update.message.reply_text(
                 "✅ **Operation cancelled**\n\n"
@@ -712,6 +719,119 @@ _These emoji-format images can now be used as custom emoji in Telegram!_
                 parse_mode='Markdown'
             )
         return
+    
+    async def broadcast_command(self, update: Update, context: CallbackContext):
+        """Handle /broadcast command - send message to all users (admin only)"""
+        from config.settings import ADMIN_USER_IDS
+        
+        user_id = update.effective_user.id
+        
+        # Check if user is admin
+        if user_id not in ADMIN_USER_IDS:
+            await update.message.reply_text(
+                "❌ **Access Denied**\n\n"
+                "_This command is only available to administrators._",
+                parse_mode='Markdown'
+            )
+            return
+        
+        # Check if message is provided
+        if not context.args:
+            # No message provided, set state to await message
+            context.user_data['state'] = 'awaiting_broadcast'
+            await update.message.reply_text(
+                "📢 **Broadcast Message**\n\n"
+                "Please send the message you want to broadcast to all users.\n\n"
+                "_This message will be sent to all users who have interacted with the bot._\n\n"
+                "Send /cancel to cancel.",
+                parse_mode='Markdown'
+            )
+            return
+        
+        # Message provided with command
+        broadcast_message = " ".join(context.args)
+        await self._send_broadcast(update, context, broadcast_message)
+    
+    async def _send_broadcast(self, update: Update, context: CallbackContext, message: str):
+        """Send broadcast message to all users"""
+        try:
+            # Get all user IDs
+            all_user_ids = self.db.get_all_user_ids()
+            
+            if not all_user_ids:
+                await update.message.reply_text(
+                    "⚠️ **No users found**\n\n"
+                    "_There are no users in the database to broadcast to._",
+                    parse_mode='Markdown'
+                )
+                return
+            
+            # Send initial status message
+            status_msg = await update.message.reply_text(
+                f"📢 **Broadcasting message...**\n\n"
+                f"Total users: {len(all_user_ids)}\n"
+                f"Progress: 0/{len(all_user_ids)}",
+                parse_mode='Markdown'
+            )
+            
+            # Send message to all users
+            success_count = 0
+            failed_count = 0
+            
+            for idx, user_id in enumerate(all_user_ids, 1):
+                try:
+                    # Format the broadcast message
+                    formatted_message = f"📢 **Broadcast Message**\n\n{message}"
+                    
+                    # Send message to user
+                    await context.bot.send_message(
+                        chat_id=user_id,
+                        text=formatted_message,
+                        parse_mode='Markdown'
+                    )
+                    success_count += 1
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to send broadcast to user {user_id}: {e}")
+                    failed_count += 1
+                
+                # Update status every 10 users or at the end
+                if idx % 10 == 0 or idx == len(all_user_ids):
+                    try:
+                        await status_msg.edit_text(
+                            f"📢 **Broadcasting message...**\n\n"
+                            f"Total users: {len(all_user_ids)}\n"
+                            f"Progress: {idx}/{len(all_user_ids)}\n"
+                            f"✅ Sent: {success_count}\n"
+                            f"❌ Failed: {failed_count}",
+                            parse_mode='Markdown'
+                        )
+                    except:
+                        pass  # Ignore edit errors
+            
+            # Send final summary
+            summary_text = f"""✅ **Broadcast Complete!**
+
+📊 **Results:**
+• Total users: {len(all_user_ids)}
+• Successfully sent: {success_count}
+• Failed: {failed_count}
+
+📝 **Message:**
+{message[:200]}{'...' if len(message) > 200 else ''}"""
+            
+            await update.message.reply_text(summary_text, parse_mode='Markdown')
+            
+            # Clear user state
+            context.user_data.pop('state', None)
+            
+        except Exception as e:
+            logger.error(f"Error in broadcast: {e}")
+            await update.message.reply_text(
+                f"❌ **Broadcast Failed**\n\n"
+                f"_An error occurred: {str(e)[:100]}_",
+                parse_mode='Markdown'
+            )
     
     def _create_navigation_buttons(self, exclude_current=None, context_type="default"):
         """Create contextual navigation buttons based on the situation"""

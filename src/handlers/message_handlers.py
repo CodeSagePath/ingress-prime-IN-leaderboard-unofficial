@@ -55,8 +55,8 @@ class MessageHandlers:
         """Check if the bot should respond to this message - SIMPLIFIED AND LESS INTRUSIVE"""
         message = update.message
         
-        # Always respond if user is in data submission mode
-        if context.user_data.get('state') == 'awaiting_data':
+        # Always respond if user is in data submission mode or broadcast mode
+        if context.user_data.get('state') in ['awaiting_data', 'awaiting_broadcast']:
             return True
         
         # Check if the message is a reply to one of our messages
@@ -133,6 +133,24 @@ class MessageHandlers:
         
         # Remove bot mention from message text if present
         message_text = message_text.replace(f"@{BOT_USERNAME}", "").strip()
+        
+        # Check if user is in broadcast mode (after /broadcast command)
+        if context.user_data.get('state') == 'awaiting_broadcast':
+            from config.settings import ADMIN_USER_IDS
+            # Verify user is still admin
+            if user_id in ADMIN_USER_IDS:
+                # Get command handlers instance to call broadcast method
+                from ..handlers import CommandHandlers
+                command_handler = CommandHandlers(self.db, self.leaderboard, self.parser)
+                await command_handler._send_broadcast(update, context, message_text)
+            else:
+                await update.message.reply_text(
+                    "❌ **Access Denied**\n\n"
+                    "_This command is only available to administrators._",
+                    parse_mode='Markdown'
+                )
+                context.user_data.pop('state', None)
+            return
         
         # Check if user is in data submission mode (after /submit command or Submit button)
         if context.user_data.get('state') == 'awaiting_data':
