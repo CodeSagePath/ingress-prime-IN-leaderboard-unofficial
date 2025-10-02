@@ -254,16 +254,12 @@ _Select a key element to view the leaderboard:_""",
                 
                 submit_text = """📊 **Ready to submit your stats!**
 
-🎯 **Quick Guide:**
-**Step 1:** Open Ingress → Agent → Statistics
-**Step 2:** Copy ALL your statistics and paste them here
-**Step 3:** I'll automatically process and add them to leaderboards
+Copy your complete statistics from:
+Ingress → Agent → Statistics
 
-**That's it!** ✨ _The bot handles the rest automatically._
+Then paste them here (or reply to this message in groups).
 
-⚠️ **In groups: REPLY to this message when pasting your stats!**
-
-❌ Send `/cancel` to cancel anytime."""
+Send `/cancel` to cancel."""
 
                 # Create action buttons for submission
                 submit_keyboard = [
@@ -363,6 +359,25 @@ Compare Enlightened vs Resistance performance across all statistics.
                     reply_markup=self._create_navigation_buttons(context_type="leaderboard"),
                     parse_mode='Markdown'
                 )
+            
+            elif data == 'nav_health':
+                # Trigger health check - reuse the health command logic
+                from ..handlers.command_handlers import CommandHandlers
+                
+                # Create a mock update object for the health command
+                class MockUpdate:
+                    def __init__(self, chat_id, user_id):
+                        self.effective_user = type('User', (), {'id': user_id})()
+                        self.message = type('Message', (), {
+                            'reply_text': lambda text, reply_markup=None, parse_mode=None: 
+                                context.bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup, parse_mode=parse_mode)
+                        })()
+                
+                mock_update = MockUpdate(query.message.chat_id, query.from_user.id)
+                
+                # Create command handlers instance and call health command
+                command_handlers = CommandHandlers(self.db, self.leaderboard, self.parser)
+                await command_handlers.health_command(mock_update, context)
             
             elif data == 'nav_commands':
                 # Show all available bot commands
