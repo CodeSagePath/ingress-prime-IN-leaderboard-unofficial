@@ -324,6 +324,10 @@ PREFIX_SETTINGS = {
     "ignore_without_prefix": PREFIX_DETECTION_MODE == "strict",  # In strict mode, ignore messages without prefix
 }
 
+# Auto-delete settings for stats messages
+AUTO_DELETE_USER_STATS = os.getenv("AUTO_DELETE_USER_STATS", "true").lower() == "true"  # Auto-delete user's stats message after processing
+AUTO_DELETE_DELAY_SECONDS = int(os.getenv("AUTO_DELETE_DELAY_SECONDS", "2"))  # Delay before deleting (2 seconds default)
+
 # Data format mapping (field positions in the input data)
 DATA_FIELDS = [
     "Time Span", "Agent Name", "Agent Faction", "Date", "Time", "Level",
