@@ -334,6 +334,17 @@ PREFIX_SETTINGS = {
 AUTO_DELETE_USER_STATS = os.getenv("AUTO_DELETE_USER_STATS", "true").lower() == "true"  # Auto-delete user's stats message after processing
 AUTO_DELETE_DELAY_SECONDS = int(os.getenv("AUTO_DELETE_DELAY_SECONDS", "2"))  # Delay before deleting (2 seconds default)
 
+# Admin User IDs for Broadcast Feature
+# Load admin user IDs from environment variable and convert to list of integers
+ADMIN_USER_IDS_STR = os.getenv("ADMIN_USER_IDS", "")
+ADMIN_USER_IDS = []
+if ADMIN_USER_IDS_STR:
+    try:
+        ADMIN_USER_IDS = [int(uid.strip()) for uid in ADMIN_USER_IDS_STR.split(",") if uid.strip()]
+    except ValueError as e:
+        print(f"Warning: Invalid ADMIN_USER_IDS format in .env file: {e}")
+        ADMIN_USER_IDS = []
+
 # Data format mapping (field positions in the input data)
 DATA_FIELDS = [
     "Time Span", "Agent Name", "Agent Faction", "Date", "Time", "Level",
