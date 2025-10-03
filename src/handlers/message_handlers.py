@@ -87,7 +87,7 @@ class MessageHandlers:
     
     def _looks_like_ingress_stats(self, message_text: str) -> bool:
         """Check if message looks like actual Ingress statistics data"""
-        if not message_text or len(message_text) < 50:  # Stats are typically long
+        if not message_text or len(message_text) < 100:  # Stats are typically very long
             return False
         
         # Look for multiple Ingress-specific keywords that indicate stats
@@ -111,13 +111,29 @@ class MessageHandlers:
         # Count how many keywords are found
         keyword_count = sum(1 for keyword in ingress_keywords if keyword in text_lower)
         
-        # If we find 5+ Ingress keywords, it's likely stats data
-        if keyword_count >= 5:
+        # If we find 8+ Ingress keywords, it's likely stats data (increased from 5)
+        if keyword_count >= 8:
             return True
         
-        # Also check for the traditional prefix patterns but be more lenient
-        should_process, _, _ = self.ingress_prefix_detector.should_process_message(message_text)
-        return should_process
+        # Check for the required prefix pattern specifically (not flexible mode)
+        has_prefix, _ = self.ingress_prefix_detector.has_required_prefix(message_text)
+        if has_prefix:
+            return True
+        
+        # Check if message contains structured data that looks like stats
+        # Look for patterns like "Field Name: Value" or "Field Name Value"
+        lines = message_text.split('\n')
+        structured_lines = 0
+        for line in lines:
+            line = line.strip()
+            if ':' in line or (len(line.split()) >= 2 and any(keyword in line.lower() for keyword in ingress_keywords[:10])):
+                structured_lines += 1
+        
+        # If we have many structured lines with Ingress keywords, it's likely stats
+        if structured_lines >= 10 and keyword_count >= 5:
+            return True
+        
+        return False
     
     async def handle_message(self, update: Update, context: CallbackContext):
         """Handle text messages with controlled submission acceptance"""
