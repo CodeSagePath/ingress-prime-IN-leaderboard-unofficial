@@ -22,7 +22,7 @@ class MessageHandlers:
         self.parser = data_parser
         self.prefix_detector = PrefixDetector(db_manager)
         self.ingress_prefix_detector = IngressPrefixDetector()
-        self.enhanced_handlers = EnhancedMessageHandlers(db_manager)
+        self.enhanced_handlers = EnhancedMessageHandlers(db_manager, leaderboard_manager)
     
     async def _auto_delete_user_message(self, update: Update):
         """

@@ -18,7 +18,7 @@ class CommandHandlers:
         self.db = db_manager
         self.leaderboard = leaderboard_manager
         self.parser = data_parser
-        self.enhanced_handlers = EnhancedMessageHandlers(db_manager)
+        self.enhanced_handlers = EnhancedMessageHandlers(db_manager, leaderboard_manager)
     
     async def start_command(self, update: Update, context: CallbackContext):
         """Handle /start command"""
