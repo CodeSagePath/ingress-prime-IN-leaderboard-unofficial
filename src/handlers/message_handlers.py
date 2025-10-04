@@ -11,6 +11,7 @@ from telegram.error import BadRequest
 from config.settings import BOT_USERNAME, AUTO_DELETE_USER_STATS, AUTO_DELETE_DELAY_SECONDS
 from ..services.prefix_detector import PrefixDetector
 from ..services.ingress_prefix_detector import IngressPrefixDetector
+from .enhanced_message_handlers import EnhancedMessageHandlers
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class MessageHandlers:
         self.parser = data_parser
         self.prefix_detector = PrefixDetector(db_manager)
         self.ingress_prefix_detector = IngressPrefixDetector()
+        self.enhanced_handlers = EnhancedMessageHandlers(db_manager)
     
     async def _auto_delete_user_message(self, update: Update):
         """
@@ -52,7 +54,7 @@ class MessageHandlers:
             logger.error(f"Unexpected error while deleting user message: {e}")
     
     def _should_respond_to_message(self, update: Update, context: CallbackContext) -> bool:
-        """Check if the bot should respond to this message - SIMPLIFIED AND LESS INTRUSIVE"""
+        """Check if the bot should respond to this message - VERY CONSERVATIVE TO PREVENT INTERRUPTIONS"""
         message = update.message
         
         # Always respond if user is in data submission mode or broadcast mode
@@ -66,73 +68,129 @@ class MessageHandlers:
                 return True
         
         # Check if the bot is mentioned in the message
+        bot_mentioned = False
         if message.entities:
             for entity in message.entities:
                 if entity.type == "mention":
                     # Extract the mentioned username
                     mention_text = message.text[entity.offset:entity.offset + entity.length]
                     if mention_text == f"@{BOT_USERNAME}":
-                        return True
+                        bot_mentioned = True
+                        break
         
-        # NEW: Only respond to messages that clearly look like Ingress statistics
-        # This prevents the bot from interrupting normal conversations
+        # If bot is mentioned, always respond (regardless of message length)
+        if bot_mentioned:
+            return True
+        
+        # ADDITIONAL SAFEGUARD: Don't respond to very short messages (likely conversation)
         message_text = message.text.strip() if message.text else ""
+        if len(message_text) < 200:  # Very short messages are almost never Ingress stats
+            return False
         
-        # Check if this looks like actual Ingress statistics data
+        # ADDITIONAL SAFEGUARD: Don't respond to messages that look like casual conversation
+        # Check for common conversation patterns that should be ignored
+        casual_patterns = [
+            # Emoji-heavy messages (like the example: "😴 @9saw walked 3.1k in month")
+            lambda text: len([c for c in text if ord(c) > 127]) > len(text) * 0.1,  # >10% non-ASCII chars (emojis)
+            # Messages with @mentions of users (not the bot)
+            lambda text: '@' in text and f'@{BOT_USERNAME}' not in text,
+            # Messages that are clearly conversational
+            lambda text: any(phrase in text.lower() for phrase in [
+                'seems like', 'i think', 'maybe', 'probably', 'lol', 'haha', 'what do you think',
+                'by the way', 'btw', 'anyway', 'just saying', 'in my opinion', 'imho'
+            ])
+        ]
+        
+        # If any casual pattern matches, don't respond
+        for i, pattern_check in enumerate(casual_patterns):
+            if pattern_check(message_text):
+                logger.info(f"Message ignored - casual conversation pattern {i+1} detected (user: {update.effective_user.id})")
+                return False
+        
+        # Only respond to messages that VERY clearly look like Ingress statistics
+        # This is now much more conservative
         if self._looks_like_ingress_stats(message_text):
+            logger.info(f"Message accepted - looks like Ingress stats (user: {update.effective_user.id})")
             return True
         
         # Don't respond to regular conversation messages
+        logger.info(f"Message ignored - doesn't look like Ingress stats (user: {update.effective_user.id}, length: {len(message_text)})")
         return False
     
     def _looks_like_ingress_stats(self, message_text: str) -> bool:
-        """Check if message looks like actual Ingress statistics data"""
-        if not message_text or len(message_text) < 100:  # Stats are typically very long
+        """Check if message looks like actual Ingress statistics data - MUCH MORE CONSERVATIVE"""
+        if not message_text or len(message_text) < 200:  # Stats are typically very long (increased from 100)
             return False
         
-        # Look for multiple Ingress-specific keywords that indicate stats
-        ingress_keywords = [
-            'time span', 'agent name', 'lifetime', 'current level',
-            'unique portals visited', 'portals discovered', 'xm collected',
-            'resonators deployed', 'links created', 'control fields',
-            'mind units', 'longest link', 'largest field', 'xm recharged',
-            'portals captured', 'unique portals captured', 'mods deployed',
-            'resonators destroyed', 'portals neutralized', 'enemy links destroyed',
-            'enemy fields destroyed', 'max time portal held', 'max time link maintained',
-            'max link length x days', 'max time field held', 'largest field mu x days',
-            'unique missions completed', 'hacks', 'drone hacks', 'glyph hack points',
-            'longest hacking streak', 'agents successfully recruited', 'distance walked',
-            'kinetic capsules completed', 'wayfarer', 'opr', 'agreements'
+        # First, check for the required prefix pattern - this is the most reliable indicator
+        has_prefix, _ = self.ingress_prefix_detector.has_required_prefix(message_text)
+        if has_prefix:
+            return True
+        
+        # Look for VERY specific Ingress statistics patterns that are unlikely to appear in normal conversation
+        # These are complete phrases that appear in actual Ingress statistics exports
+        specific_ingress_patterns = [
+            'time span agent name',
+            'agent faction',
+            'lifetime ap',
+            'current ap',
+            'unique portals visited',
+            'portals discovered',
+            'xm collected',
+            'resonators deployed',
+            'links created',
+            'control fields created',
+            'mind units captured',
+            'portals captured',
+            'unique portals captured',
+            'mods deployed',
+            'resonators destroyed',
+            'portals neutralized',
+            'enemy links destroyed',
+            'enemy fields destroyed',
+            'kinetic capsules completed',
+            'unique missions completed',
+            'glyph hack points',
+            'longest sojourner streak',
+            'max time portal held',
+            'max time link maintained',
+            'max link length x days',
+            'max time field held',
+            'largest field mus x days',
+            'opr agreements',
+            'portal scans uploaded',
+            'uniques scout controlled',
+            'machina portals reclaimed'
         ]
         
         # Convert to lowercase for case-insensitive matching
         text_lower = message_text.lower()
         
-        # Count how many keywords are found
-        keyword_count = sum(1 for keyword in ingress_keywords if keyword in text_lower)
+        # Count how many SPECIFIC patterns are found (not just keywords)
+        pattern_count = sum(1 for pattern in specific_ingress_patterns if pattern in text_lower)
         
-        # If we find 8+ Ingress keywords, it's likely stats data (increased from 5)
-        if keyword_count >= 8:
+        # Require a much higher threshold - at least 12 specific patterns
+        if pattern_count >= 12:
             return True
         
-        # Check for the required prefix pattern specifically (not flexible mode)
-        has_prefix, _ = self.ingress_prefix_detector.has_required_prefix(message_text)
-        if has_prefix:
-            return True
-        
-        # Check if message contains structured data that looks like stats
-        # Look for patterns like "Field Name: Value" or "Field Name Value"
+        # Additional check: Look for structured data format typical of Ingress stats
+        # Must have many lines with colons and numbers (typical stats format)
         lines = message_text.split('\n')
-        structured_lines = 0
+        stats_lines = 0
+        
         for line in lines:
             line = line.strip()
-            if ':' in line or (len(line.split()) >= 2 and any(keyword in line.lower() for keyword in ingress_keywords[:10])):
-                structured_lines += 1
+            # Look for lines that have a colon and contain numbers (typical stats format)
+            if ':' in line and any(char.isdigit() for char in line):
+                # Check if this line contains any of our specific patterns
+                if any(pattern in line.lower() for pattern in specific_ingress_patterns):
+                    stats_lines += 1
         
-        # If we have many structured lines with Ingress keywords, it's likely stats
-        if structured_lines >= 10 and keyword_count >= 5:
+        # Only consider it stats if we have many structured lines AND some specific patterns
+        if stats_lines >= 15 and pattern_count >= 8:
             return True
         
+        # If none of the above conditions are met, it's probably not Ingress stats
         return False
     
     async def handle_message(self, update: Update, context: CallbackContext):
@@ -170,7 +228,8 @@ class MessageHandlers:
         
         # Check if user is in data submission mode (after /submit command or Submit button)
         if context.user_data.get('state') == 'awaiting_data':
-            await self.process_data_submission(update, context)
+            # Use enhanced handlers for better parsing and spreadsheet layout
+            await self.enhanced_handlers.handle_stats_message(update, context)
             return
         
         # Check if this is a reply to a bot message (Submit button flow)
@@ -185,15 +244,8 @@ class MessageHandlers:
                     # Has required prefix - process it
                     detection_result = self._analyze_message(message_text, user_id)
                     if detection_result['type'] == 'ingress_data':
-                        # Valid stats data in reply to bot message - process it
-                        reply_markup = self._create_navigation_buttons(context_type="data_processing")
-                        await update.message.reply_text(
-                            "🎯 **Processing your stats data...**\n\n"
-                            "Thanks for replying with your statistics! ⚡",
-                            reply_markup=reply_markup,
-                            parse_mode='Markdown'
-                        )
-                        await self.process_data_submission(update, context)
+                        # Valid stats data in reply to bot message - use enhanced processing
+                        await self.enhanced_handlers.handle_stats_message(update, context)
                         return
                     else:
                         # Has prefix but not valid stats data
@@ -218,15 +270,8 @@ class MessageHandlers:
                         # In flexible mode, still try to help
                         detection_result = self._analyze_message(message_text, user_id)
                         if detection_result['type'] == 'ingress_data':
-                            # Valid stats data in reply to bot message - process it
-                            reply_markup = self._create_navigation_buttons(context_type="data_processing")
-                            await update.message.reply_text(
-                                "🎯 **Processing your stats data...**\n\n"
-                                "Thanks for replying with your statistics! ⚡",
-                                reply_markup=reply_markup,
-                                parse_mode='Markdown'
-                            )
-                            await self.process_data_submission(update, context)
+                            # Valid stats data in reply to bot message - use enhanced processing
+                            await self.enhanced_handlers.handle_stats_message(update, context)
                             return
                         else:
                             # Reply to bot but not valid stats data
@@ -281,13 +326,8 @@ class MessageHandlers:
         detection_result = self._analyze_message(processing_text, user_id)
         
         if detection_result['type'] == 'ingress_data':
-            # Valid stats data - process it directly with minimal response
-            reply_markup = self._create_navigation_buttons(context_type="data_processing")
-            await update.message.reply_text(
-                "✅ Processing your stats...",
-                reply_markup=reply_markup
-            )
-            await self.process_data_submission(update, context)
+            # Valid stats data - use enhanced processing for better parsing and layout
+            await self.enhanced_handlers.handle_stats_message(update, context)
             return
         
         elif detection_result['type'] == 'partial_data':
