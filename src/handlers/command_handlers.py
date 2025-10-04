@@ -9,6 +9,7 @@ from telegram.ext import CallbackContext
 from config.settings import LEADERBOARD_STATS, TIME_SLOTS, KEY_ELEMENTS, BOT_COMMANDS
 from ..services import LeaderboardManager
 from ..parsers import DataParser
+from .enhanced_message_handlers import EnhancedMessageHandlers
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class CommandHandlers:
         self.db = db_manager
         self.leaderboard = leaderboard_manager
         self.parser = data_parser
+        self.enhanced_handlers = EnhancedMessageHandlers(db_manager)
     
     async def start_command(self, update: Update, context: CallbackContext):
         """Handle /start command"""
@@ -67,25 +69,33 @@ Ready to see where you rank? 🏆"""
         return
     
     async def submit_command(self, update: Update, context: CallbackContext):
-        """Handle /submit command"""
+        """Handle /submit command with enhanced parsing and spreadsheet layout"""
         user_id = update.effective_user.id
         
         # Check if data was provided with the command
         if context.args:
             # Data provided with command, process it directly
             data_text = " ".join(context.args)
-            await self._process_submission_data(update, context, data_text)
+            await self.enhanced_handlers.handle_stats_message(update, context)
             return
         
         # No data provided, set state and show prompt
         context.user_data['state'] = 'awaiting_data'
         
-        submit_text = """📊 **Ready to submit your stats!**
+        submit_text = """📊 **Enhanced Stats Submission**
 
-Copy your complete statistics from:
-Ingress → Agent → Statistics
+🎯 **New Features:**
+• Smart data validation & error detection
+• Spreadsheet-like display format
+• Confidence scoring for data quality
+• Interactive review before saving
 
-Then paste them here (or reply to this message in groups).
+📋 **Instructions:**
+1. Copy your complete statistics from Ingress
+   _(Agent → Statistics)_
+2. Paste them here
+3. Review the formatted data table
+4. Confirm or make corrections
 
 Send `/cancel` to cancel."""
         
