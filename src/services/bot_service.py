@@ -11,6 +11,7 @@ from ..database import DatabaseManager
 from ..parsers import DataParser
 from .leaderboard_service import LeaderboardManager
 from ..handlers import CommandHandlers, MessageHandlers, CallbackHandlers
+from ..handlers.enhanced_message_handlers import EnhancedMessageHandlers
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class IngressLeaderboardBot:
         # Initialize handlers
         self.command_handlers = CommandHandlers(self.db, self.leaderboard, self.parser)
         self.message_handlers = MessageHandlers(self.db, self.leaderboard, self.parser)
+        self.enhanced_message_handlers = EnhancedMessageHandlers(self.db, self.leaderboard)
         self.callback_handlers = CallbackHandlers(self.db, self.leaderboard, self.parser)
     
     def run(self):
@@ -67,6 +69,13 @@ For Termux users:
         
         # Add message and callback handlers
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.message_handlers.handle_message))
+        
+        # Add enhanced callback handlers for new features
+        application.add_handler(CallbackQueryHandler(self.enhanced_message_handlers.handle_view_callback, pattern=r'^view_'))
+        application.add_handler(CallbackQueryHandler(self.enhanced_message_handlers.handle_back_to_menu, pattern=r'^back_to_menu$'))
+        application.add_handler(CallbackQueryHandler(self.enhanced_message_handlers.handle_force_save, pattern=r'^force_save$'))
+        
+        # Keep original callback handler for other callbacks
         application.add_handler(CallbackQueryHandler(self.callback_handlers.handle_callback_query))
         
         # Add error handler
