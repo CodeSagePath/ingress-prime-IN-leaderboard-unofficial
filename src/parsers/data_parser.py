@@ -29,9 +29,15 @@ class DataParser:
             # Split the data by spaces/tabs
             parts = cleaned_line.split()
             
-            # Skip header lines
+            # Skip header lines, but check if there's data mixed in
             if self._is_header_line(parts):
-                return None, None  # Headers are OK to skip, not an error
+                # Try to extract data from mixed header/data line
+                extracted_data = self._extract_data_from_mixed_line(parts)
+                if extracted_data:
+                    # Use the extracted data instead
+                    parts = extracted_data
+                else:
+                    return None, None  # Pure header line, OK to skip, not an error
             
             # Check minimum field count
             if len(parts) < 10:
@@ -436,6 +442,39 @@ ALL TIME YourAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 ...
                 pass
             
         return False
+
+    def _extract_data_from_mixed_line(self, parts: List[str]) -> Optional[List[str]]:
+        """Extract data from a line that contains both header and data"""
+        # Look for "ALL TIME" pattern which indicates start of data
+        for i in range(len(parts) - 1):
+            if parts[i] == "ALL" and parts[i + 1] == "TIME":
+                # Check if this looks like the start of actual data
+                # We need at least agent_name, faction, date, time after "ALL TIME"
+                if i + 6 < len(parts):
+                    try:
+                        # Try to parse date and time at expected positions
+                        datetime.strptime(parts[i + 4], '%Y-%m-%d')
+                        datetime.strptime(parts[i + 5], '%H:%M:%S')
+                        # Extract from "ALL TIME" onwards
+                        return parts[i:]
+                    except (ValueError, IndexError):
+                        continue
+        
+        # Look for other time span patterns (single word followed by agent name, faction, date, time)
+        for i in range(len(parts) - 5):
+            # Check if this position could be start of data
+            if i + 4 < len(parts):
+                try:
+                    # Check if positions i+2, i+3 could be date and time
+                    datetime.strptime(parts[i + 2], '%Y-%m-%d')
+                    datetime.strptime(parts[i + 3], '%H:%M:%S')
+                    # Check if position i+1 looks like a faction
+                    if parts[i + 1].lower() in ['enlightened', 'resistance']:
+                        return parts[i:]
+                except (ValueError, IndexError):
+                    continue
+        
+        return None
     
     def parse_multiline_data(self, data_text: str) -> Tuple[List[Dict], List[ParseError]]:
         """Parse multiple lines of data with detailed error reporting"""
