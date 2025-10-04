@@ -350,6 +350,10 @@ class EnhancedMessageHandlers:
         except Exception as e:
             logger.error(f"Unexpected error while deleting user message: {e}")
     
+    async def handle_stats_message(self, update: Update, context: CallbackContext):
+        """Handle stats message - wrapper for handle_enhanced_data_submission"""
+        await self.handle_enhanced_data_submission(update, context)
+    
     def create_enhanced_help_message(self) -> str:
         """Create enhanced help message with examples"""
         help_message = """
