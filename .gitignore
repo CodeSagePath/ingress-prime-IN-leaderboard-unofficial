@@ -3,9 +3,9 @@
 # .zencoder*
 
 # # Database files
-# data/*.db
-# data/*.sqlite
-# data/*.sqlite3
+data/*.db
+data/*.sqlite
+data/*.sqlite3
 
 # # Python
 __pycache__/
@@ -25,9 +25,9 @@ __pycache__/
 # sdist/
 # var/
 # wheels/
-# *.egg-info/
+*.egg-info/
 # .installed.cfg
-# *.egg
+*.egg
 
 # # Virtual environments
 # venv/
@@ -40,9 +40,9 @@ __pycache__/
 # *.swp
 # *.swo
 
-# # Logs
-# *.log
-# logs/
+# Logs
+*.log
+logs/
 
 # # OS
 # .DS_Store
