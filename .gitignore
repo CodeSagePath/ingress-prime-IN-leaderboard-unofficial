@@ -1,58 +1,58 @@
-# Data files
+# # Data files
 
-.zencoder*
+# .zencoder*
 
-# Database files
-data/*.db
-data/*.sqlite
-data/*.sqlite3
+# # Database files
+# data/*.db
+# data/*.sqlite
+# data/*.sqlite3
 
-# Python
+# # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# *.py[cod]
+# *$py.class
+# *.so
+# .Python
+# build/
+# develop-eggs/
+# dist/
+# downloads/
+# eggs/
+# .eggs/
+# lib/
+# lib64/
+# parts/
+# sdist/
+# var/
+# wheels/
+# *.egg-info/
+# .installed.cfg
+# *.egg
 
-# Virtual environments
-venv/
-env/
-ENV/
+# # Virtual environments
+# venv/
+# env/
+# ENV/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# # IDE
+# .vscode/
+# .idea/
+# *.swp
+# *.swo
 
-# Logs
-*.log
-logs/
+# # Logs
+# *.log
+# logs/
 
-# OS
-.DS_Store
-Thumbs.db
-.marscode/
+# # OS
+# .DS_Store
+# Thumbs.db
+# .marscode/
 
-# Bot token (security)
-config/local_settings.py
-# .env
+# # Bot token (security)
+# config/local_settings.py
+# # .env
 
-# Additional debugging files
-debug_handler_flow.py
-debug_message_flow.py
+# # Additional debugging files
+# debug_handler_flow.py
+# debug_message_flow.py
