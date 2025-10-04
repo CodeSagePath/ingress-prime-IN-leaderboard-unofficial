@@ -125,9 +125,15 @@ class EnhancedDataParser:
             # Split the data
             parts = cleaned_line.split()
             
-            # Skip header lines
+            # Skip header lines, but check if there's data mixed in
             if self._is_header_line(parts):
-                return ParseResult(success=False, errors=["Header line detected, not data"])
+                # Try to extract data from mixed header/data line
+                extracted_data = self._extract_data_from_mixed_line(parts)
+                if extracted_data:
+                    # Use the extracted data instead
+                    parts = extracted_data
+                else:
+                    return ParseResult(success=False, errors=["Header line detected, not data"])
             
             # Intelligent field detection and parsing
             parse_result = self._intelligent_parse(parts)
@@ -503,6 +509,39 @@ class EnhancedDataParser:
         
         keyword_count = sum(1 for part in parts if part in header_keywords)
         return keyword_count > len(parts) * 0.3  # More than 30% are header keywords
+
+    def _extract_data_from_mixed_line(self, parts: List[str]) -> Optional[List[str]]:
+        """Extract data from a line that contains both header and data"""
+        # Look for "ALL TIME" pattern which indicates start of data
+        for i in range(len(parts) - 1):
+            if parts[i] == "ALL" and parts[i + 1] == "TIME":
+                # Check if this looks like the start of actual data
+                # We need at least agent_name, faction, date, time after "ALL TIME"
+                if i + 6 < len(parts):
+                    try:
+                        # Try to parse date and time at expected positions
+                        datetime.strptime(parts[i + 4], '%Y-%m-%d')
+                        datetime.strptime(parts[i + 5], '%H:%M:%S')
+                        # Extract from "ALL TIME" onwards
+                        return parts[i:]
+                    except (ValueError, IndexError):
+                        continue
+        
+        # Look for other time span patterns (single word followed by agent name, faction, date, time)
+        for i in range(len(parts) - 5):
+            # Check if this position could be start of data
+            if i + 4 < len(parts):
+                try:
+                    # Check if positions i+2, i+3 could be date and time
+                    datetime.strptime(parts[i + 2], '%Y-%m-%d')
+                    datetime.strptime(parts[i + 3], '%H:%M:%S')
+                    # Check if position i+1 looks like a faction
+                    if parts[i + 1].lower() in ['enlightened', 'resistance']:
+                        return parts[i:]
+                except (ValueError, IndexError):
+                    continue
+        
+        return None
     
     def format_number(self, number: int) -> str:
         """Format large numbers with appropriate suffixes"""
