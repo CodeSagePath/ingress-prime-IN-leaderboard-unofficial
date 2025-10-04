@@ -507,8 +507,20 @@ class EnhancedDataParser:
             "Lifetime", "Current", "Unique", "Portals", "Visited"
         ]
         
-        keyword_count = sum(1 for part in parts if part in header_keywords)
-        return keyword_count > len(parts) * 0.3  # More than 30% are header keywords
+        # Check if line contains "ALL TIME" pattern - indicates mixed header/data
+        for i in range(len(parts) - 1):
+            if parts[i] == "ALL" and parts[i + 1] == "TIME":
+                return True  # Mixed line that needs data extraction
+        
+        # Check if first 20 parts contain many header keywords (for mixed lines)
+        first_parts = parts[:20]  # Only check first 20 parts
+        keyword_count = sum(1 for part in first_parts if part in header_keywords)
+        if keyword_count >= 8:  # If 8+ header keywords in first 20 parts
+            return True
+        
+        # Check if overall line has high concentration of header keywords
+        keyword_count_total = sum(1 for part in parts if part in header_keywords)
+        return keyword_count_total > len(parts) * 0.3  # More than 30% are header keywords
 
     def _extract_data_from_mixed_line(self, parts: List[str]) -> Optional[List[str]]:
         """Extract data from a line that contains both header and data"""
