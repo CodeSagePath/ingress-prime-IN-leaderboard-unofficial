@@ -384,7 +384,7 @@ class MessageHandlers:
         
         # Look for "ALL TIME" pattern
         if len(parts) >= 2 and parts[0] == "ALL" and parts[1] == "TIME":
-            if len(parts) >= 60:  # Sufficient fields
+            if len(parts) >= 50:  # Sufficient fields
                 if has_faction:
                     result = {'type': 'ingress_data'}
                     if prefix_result['has_prefix']:
@@ -393,19 +393,19 @@ class MessageHandlers:
                     return result
                 else:
                     return {
-                        'type': 'partial_data', 
+                        'type': 'partial_data',
                         'issue': "I can't find your faction (Enlightened/Resistance).",
                         'prefix_info': prefix_result if prefix_result['has_prefix'] else None
                     }
             elif len(parts) >= 10:
                 return {
-                    'type': 'partial_data', 
-                    'issue': f"only {len(parts)} fields found, need 60+ complete statistics.",
+                    'type': 'partial_data',
+                    'issue': f"only {len(parts)} fields found, need 50+ complete statistics.",
                     'prefix_info': prefix_result if prefix_result['has_prefix'] else None
                 }
             else:
                 return {
-                    'type': 'partial_data', 
+                    'type': 'partial_data',
                     'issue': "this looks too short to be complete statistics.",
                     'prefix_info': prefix_result if prefix_result['has_prefix'] else None
                 }
@@ -413,7 +413,7 @@ class MessageHandlers:
         # Check for single word time periods
         time_periods = ["DAILY", "WEEKLY", "MONTHLY", "ALL"]
         if parts[0] in time_periods:
-            if len(parts) >= 60:  # Sufficient fields
+            if len(parts) >= 50:  # Sufficient fields
                 if has_faction:
                     result = {'type': 'ingress_data'}
                     if prefix_result['has_prefix']:
@@ -422,14 +422,14 @@ class MessageHandlers:
                     return result
                 else:
                     return {
-                        'type': 'partial_data', 
+                        'type': 'partial_data',
                         'issue': "I can't find your faction (Enlightened/Resistance).",
                         'prefix_info': prefix_result if prefix_result['has_prefix'] else None
                     }
             elif len(parts) >= 10:
                 return {
-                    'type': 'partial_data', 
-                    'issue': f"only {len(parts)} fields found, need 60+ complete statistics.",
+                    'type': 'partial_data',
+                    'issue': f"only {len(parts)} fields found, need 50+ complete statistics.",
                     'prefix_info': prefix_result if prefix_result['has_prefix'] else None
                 }
         
@@ -440,8 +440,8 @@ class MessageHandlers:
             if number_count >= 3 and len(parts) >= 5:
                 if has_faction:
                     return {
-                        'type': 'partial_data', 
-                        'issue': f"only {len(parts)} fields found, need 60+ complete statistics.",
+                        'type': 'partial_data',
+                        'issue': f"only {len(parts)} fields found, need 50+ complete statistics.",
                         'prefix_info': prefix_result,
                         'enhanced_detection': True
                     }
