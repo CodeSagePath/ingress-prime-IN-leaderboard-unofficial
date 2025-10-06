@@ -319,7 +319,7 @@ KEY_ELEMENTS = {
 
 # Prefix Detection Configuration
 PREFIX_DETECTION_MODE = os.getenv("PREFIX_DETECTION_MODE", "flexible").lower()  # "strict" or "flexible"
-REQUIRED_PREFIX_PATTERN = "Time Span Agent Name"  # The required prefix pattern for strict mode
+REQUIRED_PREFIX_PATTERN = "ALL TIME"  # The required prefix pattern for strict mode
 
 # Prefix Detection Settings
 PREFIX_SETTINGS = {
