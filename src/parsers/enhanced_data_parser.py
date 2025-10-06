@@ -115,35 +115,45 @@ class EnhancedDataParser:
         }
     
     def parse_data_line(self, data_line: str) -> ParseResult:
-        """Parse a single line with enhanced validation and field detection"""
+        """Parse data from text that may contain multiple lines"""
         try:
-            # Clean and prepare the data
-            cleaned_line = self._clean_data_line(data_line.strip())
-            if not cleaned_line:
-                return ParseResult(success=False, errors=["Empty or invalid data line"])
-            
-            # Split the data
-            parts = cleaned_line.split()
-            
-            # Skip header lines, but check if there's data mixed in
-            if self._is_header_line(parts):
-                # Try to extract data from mixed header/data line
-                extracted_data = self._extract_data_from_mixed_line(parts)
-                if extracted_data:
-                    # Use the extracted data instead
-                    parts = extracted_data
-                else:
-                    return ParseResult(success=False, errors=["Header line detected, not data"])
-            
+            # Split into lines and find the data line
+            lines = data_line.split('\n')
+            parts = None
+
+            for line in lines:
+                cleaned_line = self._clean_data_line(line.strip())
+                if not cleaned_line:
+                    continue
+
+                candidate_parts = cleaned_line.split()
+
+                # Skip header lines
+                if self._is_header_line(candidate_parts):
+                    # Try to extract data from mixed header/data line
+                    extracted_data = self._extract_data_from_mixed_line(candidate_parts)
+                    if extracted_data:
+                        parts = extracted_data
+                        break
+                    else:
+                        continue  # Skip this line
+
+                # Found a non-header line, use it
+                parts = candidate_parts
+                break
+
+            if not parts or len(parts) < 10:
+                return ParseResult(success=False, errors=["No valid data line found with sufficient fields"])
+
             # Intelligent field detection and parsing
             parse_result = self._intelligent_parse(parts)
-            
+
             return parse_result
-            
+
         except Exception as e:
             self.logger.error(f"Error parsing data line: {e}")
             return ParseResult(
-                success=False, 
+                success=False,
                 errors=[f"Unexpected parsing error: {str(e)}"]
             )
     
