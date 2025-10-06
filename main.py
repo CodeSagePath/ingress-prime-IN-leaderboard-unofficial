@@ -66,6 +66,13 @@ def signal_handler(signum, frame):
     logger = logging.getLogger(__name__)
     logger.info(f"Received signal {signum}, shutting down gracefully...")
     
+    # Clean up lock file
+    try:
+        from check_bot_status import remove_lock_file
+        remove_lock_file()
+    except ImportError:
+        pass
+    
     if IS_TERMUX:
         send_termux_notification("Ingress Bot", "Bot is shutting down...")
         release_wake_lock()
@@ -77,6 +84,35 @@ def main():
     # Setup logging first
     setup_logging()
     logger = logging.getLogger(__name__)
+    
+    # Check for multiple instances before starting
+    try:
+        from check_bot_status import check_bot_running, create_lock_file, remove_lock_file
+        
+        # Check for running processes
+        running_bots = check_bot_running()
+        if running_bots:
+            error_msg = "⚠️  Multiple bot instances detected!\n"
+            error_msg += "Found running bot instances:\n"
+            for bot in running_bots:
+                error_msg += f"   PID {bot['pid']}: {bot['cmdline']}\n"
+            error_msg += "\n❌ Please stop other instances before starting a new one!"
+            logger.error(error_msg)
+            print(error_msg)
+            return
+        
+        # Create lock file
+        can_run, message = create_lock_file()
+        if not can_run:
+            logger.error(f"Cannot start bot: {message}")
+            print(f"❌ {message}")
+            return
+        
+        # Register cleanup function for lock file
+        atexit.register(remove_lock_file)
+        
+    except ImportError:
+        logger.warning("Bot status check not available, proceeding without instance check")
     
     # Setup signal handlers
     signal.signal(signal.SIGINT, signal_handler)
