@@ -19,36 +19,36 @@ class DataParser:
         self.field_mapping = {field.lower().replace(' ', '_'): i for i, field in enumerate(DATA_FIELDS)}
     
     def parse_data_line(self, data_line: str) -> Tuple[Optional[Dict], Optional[ParseError]]:
-        """Parse a single line of Ingress data with detailed error reporting"""
+        """Parse Ingress data from text that may contain multiple lines"""
         try:
-            # Clean the data line - remove any bot commands or headers
-            cleaned_line = self._clean_data_line(data_line.strip())
-            if not cleaned_line:
-                return None, None  # Empty lines (like /submit commands) are OK to skip, not an error
-                
-            # Split the data by spaces/tabs
-            parts = cleaned_line.split()
-            
-            # Skip header lines, but check if there's data mixed in
-            if self._is_header_line(parts):
-                # Try to extract data from mixed header/data line
-                extracted_data = self._extract_data_from_mixed_line(parts)
-                if extracted_data:
-                    # Use the extracted data instead
-                    parts = extracted_data
-                else:
-                    return None, None  # Pure header line, OK to skip, not an error
-            
-            # Check minimum field count
-            if len(parts) < 10:
-                return None, ParseError(
-                    "too_few_fields", 
-                    f"❌ **Not enough data fields**\n\n"
-                    f"I found only **{len(parts)} fields**, but need at least **50 fields** for a basic Ingress statistics submission.\n\n"
-                    f"🤔 **Did you copy the complete statistics?**\n"
-                    f"Make sure to copy __ALL__ your statistics from Ingress, _not just the first few columns._"
-                )
-            
+            # Split into lines and find the data line
+            lines = data_line.split('\n')
+            parts = None
+
+            for line in lines:
+                cleaned_line = self._clean_data_line(line.strip())
+                if not cleaned_line:
+                    continue
+
+                candidate_parts = cleaned_line.split()
+
+                # Skip header lines
+                if self._is_header_line(candidate_parts):
+                    # Try to extract data from mixed header/data line
+                    extracted_data = self._extract_data_from_mixed_line(candidate_parts)
+                    if extracted_data:
+                        parts = extracted_data
+                        break
+                    else:
+                        continue  # Skip this line
+
+                # Found a non-header line, use it
+                parts = candidate_parts
+                break
+
+            if not parts:
+                return None, None  # No valid data line found
+
             if len(parts) < 50:
                 return None, ParseError(
                     "insufficient_fields",
@@ -59,7 +59,7 @@ class DataParser:
                     f"• Make sure you **scroll right** to see all columns\n"
                     f"• Include _all statistics_, not just the visible ones"
                 )
-            
+
             # Validate basic structure
             error = self._validate_basic_structure(parts)
             if error:
@@ -299,7 +299,16 @@ class DataParser:
 
 🔗 Need detailed help? Use `/help_detailed`
         """
-    
+
+    def extract_sample_data(self) -> str:
+        """Return a sample data line for demonstration"""
+        return """
+```
+ALL TIME YourAgent Enlightened 2025-01-15 12:30:45 16 50000000 25000000 10000 5000 100 2000 1000000 50 100 200 3000 4000 50000 6000 7000 80000 9000 10000 11000 12000 13000 14000 15000 16000 17000 18000 19000 20000 21000 22000 23000 24000 25000 26000 27000 28000 29000 30000 31000 32000 33000 34000 35000 36000 37000 38000 39000 40000 41000 42000 43000 44000 45000 46000 47000 48000 49000 50000 51000 52000 53000 54000 55000 56000 57000 58000 59000 60000
+```
+
+**Note:** This is a shortened example. You need to copy **ALL** your actual statistics from Ingress."""
+
     def get_detailed_help(self) -> str:
         """Return detailed help with examples"""
         return """
